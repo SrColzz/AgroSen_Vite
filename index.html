@@ -1,0 +1,1696 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="AgroSen - Sistema Integral de Gestión Agropecuaria"
+    />
+    <title>AgroSen | Sistema Integral de Gestión Agropecuaria</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="src/css/style.css" />
+  </head>
+  <body>
+    <div id="login" class="login">
+      <div class="login-box">
+        <div class="login-brand">
+          <div class="brand-mark">🌱</div>
+          <h1>Agro<span style="color: var(--primary)">Sen</span></h1>
+          <p>Sistema Integral de Gestión Agropecuaria</p>
+        </div>
+        <div class="field">
+          <label>Usuario</label
+          ><input id="loginUser" value="admin" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label
+          ><input
+            id="loginPass"
+            type="password"
+            value="AgroSen123"
+            autocomplete="current-password"
+          />
+        </div>
+        <button
+          class="btn btn-primary"
+          style="width: 100%; margin-top: 8px"
+          onclick="login()"
+        >
+          🔐 Iniciar sesión
+        </button>
+        <div style="text-align: center; margin-top: 14px">
+          <button class="btn btn-soft btn-sm" onclick="recoverPassword()">
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+        <p class="login-note">
+          Prototipo frontend. La autenticación real, bcrypt, tokens, correo y
+          control de sesiones requieren backend.
+        </p>
+      </div>
+    </div>
+
+    <div class="app" id="app">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-mark">🌱</div>
+          <div>
+            <strong>Agro<span>Sen</span></strong
+            ><small>Gestión Agropecuaria</small>
+          </div>
+        </div>
+        <div class="nav-title">Principal</div>
+        <button class="nav-item active" data-page="dashboard">
+          <span class="ico">▦</span><span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-page="fincas">
+          <span class="ico">⌂</span><span>Fincas y lotes</span>
+        </button>
+        <div class="nav-title">Producción</div>
+        <button class="nav-item" data-page="agricola">
+          <span class="ico">🌾</span><span>Módulo agrícola</span>
+        </button>
+        <button class="nav-item" data-page="pecuario">
+          <span class="ico">🐄</span><span>Módulo pecuario</span>
+        </button>
+        <button class="nav-item" data-page="inventario">
+          <span class="ico">📦</span><span>Inventarios</span>
+        </button>
+        <div class="nav-title">Administración</div>
+        <button class="nav-item" data-page="financiero">
+          <span class="ico">💰</span><span>Financiero</span>
+        </button>
+        <button class="nav-item" data-page="rrhh">
+          <span class="ico">👥</span><span>Recursos humanos</span>
+        </button>
+        <button class="nav-item" data-page="reportes">
+          <span class="ico">📊</span><span>Reportes y Analytics</span>
+        </button>
+        <button class="nav-item" data-page="alertas">
+          <span class="ico">🔔</span><span>Alertas</span>
+        </button>
+        <div class="nav-title">Sistema</div>
+        <button
+          class="nav-item"
+          onclick="showToast('Configuración disponible en la versión backend')"
+        >
+          <span class="ico">⚙</span><span>Configuración</span>
+        </button>
+        <button class="nav-item" onclick="logout()">
+          <span class="ico">↪</span><span>Cerrar sesión</span>
+        </button>
+        <div class="sidebar-footer">
+          Interfaz responsive · 320px+<br />AgroSen · SENA ADSO
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <div class="crumb">
+              AgroSen / <strong id="crumb">Dashboard</strong>
+            </div>
+          </div>
+          <div class="top-actions">
+            <button
+              class="icon-btn"
+              onclick="showToast('3 notificaciones pendientes')"
+            >
+              🔔<span class="badge">3</span></button
+            ><button class="icon-btn" onclick="openModal('modalAlert')">
+              ＋
+            </button>
+            <div class="user">
+              <div class="avatar">AE</div>
+              <div><b>Administrador</b><small>Acceso completo</small></div>
+            </div>
+          </div>
+        </header>
+        <div class="content">
+          <section class="page active" id="page-dashboard">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">Panel ejecutivo · RF-070</span>
+                <h1>Buenos días, administrador 👋</h1>
+                <p>
+                  Resumen de cultivos, producción pecuaria, inventarios,
+                  finanzas y alertas de AgroSen.
+                </p>
+              </div>
+              <div class="actions">
+                <button class="btn btn-white" onclick="showPage('reportes')">
+                  📊 Ver reportes</button
+                ><button
+                  class="btn btn-primary"
+                  onclick="openModal('modalQuick')"
+                >
+                  ＋ Registro rápido
+                </button>
+              </div>
+            </div>
+            <div class="grid kpis">
+              <div class="card kpi">
+                <div>
+                  <p>Cultivos activos</p>
+                  <h3>18</h3>
+                  <span class="trend">+3 este mes</span>
+                </div>
+                <div class="icon">🌾</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Animales registrados</p>
+                  <h3>247</h3>
+                  <span class="trend">+12 nuevos</span>
+                </div>
+                <div class="icon">🐄</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Valor inventario</p>
+                  <h3>$18,4M</h3>
+                  <span class="trend">Stock estable</span>
+                </div>
+                <div class="icon">📦</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Balance del período</p>
+                  <h3>$7,2M</h3>
+                  <span class="trend">+8,4%</span>
+                </div>
+                <div class="icon">💰</div>
+              </div>
+            </div>
+            <div class="grid dashboard-grid" style="margin-top: 18px">
+              <div class="card">
+                <div class="card-head">
+                  <div>
+                    <h2>Producción e ingresos</h2>
+                    <span>Comparativa mensual</span>
+                  </div>
+                  <select
+                    onchange="updateChart(this.value)"
+                    style="
+                      border: 1px solid var(--border);
+                      padding: 7px;
+                      border-radius: 9px;
+                    "
+                  >
+                    <option value="6">Últimos 6 meses</option>
+                    <option value="12">Último año</option>
+                  </select>
+                </div>
+                <div class="chart-box">
+                  <canvas id="productionChart"></canvas>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <div>
+                    <h2>Alertas importantes</h2>
+                    <span>RF-080 · RF-083</span>
+                  </div>
+                  <button
+                    class="btn btn-soft btn-sm"
+                    onclick="showPage('alertas')"
+                  >
+                    Ver todas
+                  </button>
+                </div>
+                <div class="alerts">
+                  <div class="alert">
+                    <div class="aicon">⚠️</div>
+                    <div>
+                      <strong>Stock bajo: Fertilizante NPK</strong>
+                      <p>Quedan 18 kg · mínimo configurado: 25 kg.</p>
+                    </div>
+                  </div>
+                  <div class="alert">
+                    <div class="aicon">💉</div>
+                    <div>
+                      <strong>Vacunación próxima</strong>
+                      <p>8 bovinos requieren aplicación en 7 días.</p>
+                    </div>
+                  </div>
+                  <div class="alert">
+                    <div class="aicon">⏰</div>
+                    <div>
+                      <strong>Cosecha programada</strong>
+                      <p>Lote L-03 · café · dentro de 12 días.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <div>
+                  <h2>Accesos rápidos</h2>
+                  <span>Operaciones frecuentes</span>
+                </div>
+              </div>
+              <div class="grid quick-grid">
+                <button class="quick" onclick="openModal('modalFinca')">
+                  🏡<b>Registrar finca</b
+                  ><span>RF-010 · Crear nueva finca</span>
+                </button>
+                <button class="quick" onclick="openModal('modalCultivo')">
+                  🌱<b>Planificar cultivo</b
+                  ><span>RF-020 · Programar siembra</span>
+                </button>
+                <button class="quick" onclick="openModal('modalAnimal')">
+                  🐄<b>Registrar animal</b
+                  ><span>RF-030 · Crear ficha individual</span>
+                </button>
+                <button class="quick" onclick="openModal('modalMovimiento')">
+                  📦<b>Movimiento inventario</b
+                  ><span>RF-040/041 · Entrada o salida</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-fincas">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-010 → RF-015</span>
+                <h1>Fincas y lotes</h1>
+                <p>
+                  Registra fincas, divide parcelas, valida áreas y consulta su
+                  distribución.
+                </p>
+              </div>
+              <button class="btn btn-primary" onclick="openModal('modalFinca')">
+                ＋ Registrar finca
+              </button>
+            </div>
+            <div class="grid kpis">
+              <div class="card kpi">
+                <div>
+                  <p>Fincas</p>
+                  <h3>4</h3>
+                  <span class="muted">Activas</span>
+                </div>
+                <div class="icon">🏡</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Lotes</p>
+                  <h3>23</h3>
+                  <span class="muted">Parcelas registradas</span>
+                </div>
+                <div class="icon">🗺️</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Área total</p>
+                  <h3>86,5 ha</h3>
+                  <span class="muted">Superficie administrada</span>
+                </div>
+                <div class="icon">📐</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Área utilizada</p>
+                  <h3>71%</h3>
+                  <span class="muted">Dentro del límite</span>
+                </div>
+                <div class="icon">📍</div>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="toolbar">
+                <input
+                  class="search"
+                  id="farmSearch"
+                  oninput="filterTable('farmTable', this.value)"
+                  placeholder="🔎 Buscar finca, ubicación o suelo..."
+                /><button
+                  class="btn btn-soft btn-sm"
+                  onclick="
+                    showToast(
+                      'Mapa de finca: integración visual lista para API de mapas',
+                    )
+                  "
+                >
+                  🗺️ Ver mapa
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="farmTable">
+                  <thead>
+                    <tr>
+                      <th>Finca</th>
+                      <th>Ubicación</th>
+                      <th>Área</th>
+                      <th>Suelo</th>
+                      <th>Lotes</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>La Esperanza</td>
+                      <td>Pereira · Risaralda</td>
+                      <td>28 ha</td>
+                      <td>Franco</td>
+                      <td>8</td>
+                      <td><span class="status ok">Activa</span></td>
+                      <td>
+                        <button
+                          class="btn btn-soft btn-sm"
+                          onclick="showToast('Edición de finca abierta')"
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>El Porvenir</td>
+                      <td>Santa Rosa · Risaralda</td>
+                      <td>19,5 ha</td>
+                      <td>Arcilloso</td>
+                      <td>5</td>
+                      <td><span class="status ok">Activa</span></td>
+                      <td>
+                        <button class="btn btn-soft btn-sm">Editar</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>San Miguel</td>
+                      <td>Dosquebradas · Risaralda</td>
+                      <td>14 ha</td>
+                      <td>Arenoso</td>
+                      <td>4</td>
+                      <td><span class="status warn">Revisión</span></td>
+                      <td>
+                        <button class="btn btn-soft btn-sm">Editar</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>El Recuerdo</td>
+                      <td>La Virginia · Risaralda</td>
+                      <td>25 ha</td>
+                      <td>Franco-arcilloso</td>
+                      <td>6</td>
+                      <td><span class="status ok">Activa</span></td>
+                      <td>
+                        <button class="btn btn-soft btn-sm">Editar</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-agricola">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-020 → RF-025</span>
+                <h1>Módulo agrícola</h1>
+                <p>
+                  Planificación de cultivos, labores culturales, consumo de
+                  insumos, cosechas e historial.
+                </p>
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modalCultivo')"
+              >
+                ＋ Planificar cultivo
+              </button>
+            </div>
+            <div class="grid module-grid">
+              <div class="card module-card">
+                <div class="module-icon">🌱</div>
+                <h3>Planificación</h3>
+                <p>Tipo, variedad, lote, siembra y semilla.</p>
+                <ul class="feature-list">
+                  <li>Fecha estimada de cosecha</li>
+                  <li>Estado de cada cultivo</li>
+                  <li>Seguimiento por lote</li>
+                </ul>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalCultivo')"
+                >
+                  Nueva planificación
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">💧</div>
+                <h3>Labores culturales</h3>
+                <p>Riego, fertilización, plagas y deshierbe.</p>
+                <ul class="feature-list">
+                  <li>Registro de actividad</li>
+                  <li>Consumo automático de inventario</li>
+                  <li>Historial por cultivo</li>
+                </ul>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalLabor')"
+                >
+                  Registrar labor
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">🌾</div>
+                <h3>Cosechas</h3>
+                <p>Cantidad, calidad, fecha y destino.</p>
+                <ul class="feature-list">
+                  <li>Control de producción</li>
+                  <li>Destino de cosecha</li>
+                  <li>Trazabilidad del lote</li>
+                </ul>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalCosecha')"
+                >
+                  Registrar cosecha
+                </button>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Cultivos activos</h2>
+                <span>Historial y seguimiento</span>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Cultivo</th>
+                      <th>Variedad</th>
+                      <th>Lote</th>
+                      <th>Siembra</th>
+                      <th>Cosecha estimada</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Café</td>
+                      <td>Caturra</td>
+                      <td>L-03</td>
+                      <td>10/01/2026</td>
+                      <td>21/09/2026</td>
+                      <td><span class="status ok">En crecimiento</span></td>
+                    </tr>
+                    <tr>
+                      <td>Plátano</td>
+                      <td>Dominico</td>
+                      <td>L-05</td>
+                      <td>22/02/2026</td>
+                      <td>18/10/2026</td>
+                      <td><span class="status info">Producción</span></td>
+                    </tr>
+                    <tr>
+                      <td>Aguacate</td>
+                      <td>Hass</td>
+                      <td>L-07</td>
+                      <td>05/03/2026</td>
+                      <td>12/12/2026</td>
+                      <td><span class="status ok">En crecimiento</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-pecuario">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-030 → RF-039</span>
+                <h1>Módulo pecuario</h1>
+                <p>
+                  Fichas individuales, trazabilidad, sanidad, reproducción,
+                  producción, peso y movimientos.
+                </p>
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modalAnimal')"
+              >
+                ＋ Registrar animal
+              </button>
+            </div>
+            <div class="grid module-grid">
+              <div class="card module-card">
+                <div class="module-icon">🐄</div>
+                <h3>Inventario animal</h3>
+                <p>Identificación, especie, raza, sexo y nacimiento.</p>
+                <ul class="feature-list">
+                  <li>Código único de trazabilidad</li>
+                  <li>Ficha individual</li>
+                  <li>Movimientos de ganado</li>
+                </ul>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">💉</div>
+                <h3>Control sanitario</h3>
+                <p>Vacunas, desparasitación y tratamientos.</p>
+                <ul class="feature-list">
+                  <li>Próximas aplicaciones</li>
+                  <li>Alertas sanitarias</li>
+                  <li>Historial veterinario</li>
+                </ul>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showPage('alertas')"
+                >
+                  Ver alertas
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">🥛</div>
+                <h3>Producción y peso</h3>
+                <p>Producción diaria y ganancia de peso.</p>
+                <ul class="feature-list">
+                  <li>Promedios por animal</li>
+                  <li>Pesajes por fecha</li>
+                  <li>Leche, huevos u otros</li>
+                </ul>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Animales registrados</h2>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Exportación de ficha preparada para PDF')"
+                >
+                  PDF
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Identificación</th>
+                      <th>Especie</th>
+                      <th>Raza</th>
+                      <th>Sexo</th>
+                      <th>Nacimiento</th>
+                      <th>Trazabilidad</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>BV-001</td>
+                      <td>Bovino</td>
+                      <td>Holstein</td>
+                      <td>Hembra</td>
+                      <td>12/04/2023</td>
+                      <td>TRZ-AG-0001</td>
+                      <td><span class="status ok">Activo</span></td>
+                    </tr>
+                    <tr>
+                      <td>BV-002</td>
+                      <td>Bovino</td>
+                      <td>Cebú</td>
+                      <td>Macho</td>
+                      <td>03/08/2022</td>
+                      <td>TRZ-AG-0002</td>
+                      <td><span class="status ok">Activo</span></td>
+                    </tr>
+                    <tr>
+                      <td>AV-019</td>
+                      <td>Ave</td>
+                      <td>Isa Brown</td>
+                      <td>Hembra</td>
+                      <td>15/02/2025</td>
+                      <td>TRZ-AG-0019</td>
+                      <td><span class="status warn">Control</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-inventario">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-040 → RF-047</span>
+                <h1>Gestión de inventarios</h1>
+                <p>
+                  Entradas, salidas, stock en tiempo real, vencimientos,
+                  categorías, valorización e historial.
+                </p>
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modalMovimiento')"
+              >
+                ＋ Registrar movimiento
+              </button>
+            </div>
+            <div class="grid kpis">
+              <div class="card kpi">
+                <div>
+                  <p>Productos</p>
+                  <h3>128</h3>
+                  <span class="muted">4 categorías</span>
+                </div>
+                <div class="icon">📦</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Stock bajo</p>
+                  <h3>7</h3>
+                  <span class="status warn">Revisar</span>
+                </div>
+                <div class="icon">⚠️</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Próximos a vencer</p>
+                  <h3>4</h3>
+                  <span class="muted">≤ 30 días</span>
+                </div>
+                <div class="icon">📅</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Valor total</p>
+                  <h3>$18,4M</h3>
+                  <span class="muted">Precio promedio ponderado</span>
+                </div>
+                <div class="icon">💵</div>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="toolbar">
+                <input
+                  class="search"
+                  placeholder="🔎 Buscar producto..."
+                  oninput="filterTable('stockTable', this.value)"
+                /><select>
+                  <option>Todas las categorías</option>
+                  <option>Agrícolas</option>
+                  <option>Pecuarios</option>
+                  <option>Herramientas</option>
+                  <option>Terminados</option></select
+                ><button
+                  class="btn btn-soft btn-sm"
+                  onclick="
+                    showToast(
+                      'Historial completo disponible en la sección de movimientos',
+                    )
+                  "
+                >
+                  ↻ Historial
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="stockTable">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Categoría</th>
+                      <th>Stock</th>
+                      <th>Mínimo</th>
+                      <th>Vencimiento</th>
+                      <th>Valor</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Fertilizante NPK</td>
+                      <td>Agrícola</td>
+                      <td>18 kg</td>
+                      <td>25 kg</td>
+                      <td>30/11/2026</td>
+                      <td>$234.000</td>
+                      <td><span class="status warn">Stock bajo</span></td>
+                    </tr>
+                    <tr>
+                      <td>Desparasitante bovino</td>
+                      <td>Pecuario</td>
+                      <td>36 und</td>
+                      <td>10 und</td>
+                      <td>20/09/2026</td>
+                      <td>$480.000</td>
+                      <td><span class="status danger">Vence pronto</span></td>
+                    </tr>
+                    <tr>
+                      <td>Guantes de trabajo</td>
+                      <td>Herramientas</td>
+                      <td>92 pares</td>
+                      <td>30 pares</td>
+                      <td>—</td>
+                      <td>$1.104.000</td>
+                      <td><span class="status ok">Normal</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-financiero">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-050 → RF-058</span>
+                <h1>Módulo financiero</h1>
+                <p>
+                  Ingresos, gastos, costos por actividad, rentabilidad, flujo de
+                  caja, cartera y punto de equilibrio.
+                </p>
+              </div>
+              <div class="actions">
+                <button class="btn btn-white" onclick="openModal('modalGasto')">
+                  ＋ Gasto</button
+                ><button
+                  class="btn btn-primary"
+                  onclick="openModal('modalIngreso')"
+                >
+                  ＋ Ingreso
+                </button>
+              </div>
+            </div>
+            <div class="grid kpis">
+              <div class="card kpi">
+                <div>
+                  <p>Ingresos</p>
+                  <h3>$24,8M</h3>
+                  <span class="trend">Este período</span>
+                </div>
+                <div class="icon">↗</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Egresos</p>
+                  <h3>$17,6M</h3>
+                  <span class="muted">Incluye costos asociados</span>
+                </div>
+                <div class="icon">↘</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Rentabilidad</p>
+                  <h3>29%</h3>
+                  <span class="trend">+4,2%</span>
+                </div>
+                <div class="icon">📈</div>
+              </div>
+              <div class="card kpi">
+                <div>
+                  <p>Cuentas pendientes</p>
+                  <h3>$3,1M</h3>
+                  <span class="status warn">Por cobrar/pagar</span>
+                </div>
+                <div class="icon">🧾</div>
+              </div>
+            </div>
+            <div class="grid dashboard-grid" style="margin-top: 18px">
+              <div class="card">
+                <div class="card-head">
+                  <h2>Flujo de caja</h2>
+                  <span>RF-054 · mensual</span>
+                </div>
+                <div class="chart-box"><canvas id="financeChart"></canvas></div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h2>Rentabilidad por actividad</h2>
+                  <span>RF-053</span>
+                </div>
+                <div class="alerts">
+                  <div class="alert">
+                    <div class="aicon">☕</div>
+                    <div>
+                      <strong>Café · 34%</strong>
+                      <p>Actividad con mayor margen.</p>
+                    </div>
+                  </div>
+                  <div class="alert">
+                    <div class="aicon">🥑</div>
+                    <div>
+                      <strong>Aguacate · 27%</strong>
+                      <p>Rentabilidad estable.</p>
+                    </div>
+                  </div>
+                  <div class="alert">
+                    <div class="aicon">🐄</div>
+                    <div>
+                      <strong>Ganadería · 22%</strong>
+                      <p>Punto de equilibrio en seguimiento.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-rrhh">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-060 → RF-067</span>
+                <h1>Recursos humanos</h1>
+                <p>
+                  Empleados, contratos, asistencia, horas extras, tareas,
+                  nómina, comprobantes e historial laboral.
+                </p>
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modalEmpleado')"
+              >
+                ＋ Registrar empleado
+              </button>
+            </div>
+            <div class="grid module-grid">
+              <div class="card module-card">
+                <div class="module-icon">👥</div>
+                <h3>Personal</h3>
+                <p>Datos, cargo, salario, ingreso y tipo de contrato.</p>
+                <ul class="feature-list">
+                  <li>Historial laboral</li>
+                  <li>Vigencia contractual</li>
+                  <li>Ficha del empleado</li>
+                </ul>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">🕘</div>
+                <h3>Asistencia y tareas</h3>
+                <p>Control diario y asignación de actividades.</p>
+                <ul class="feature-list">
+                  <li>Asistencia diaria</li>
+                  <li>Horas extras</li>
+                  <li>Fecha y descripción de tarea</li>
+                </ul>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">🧮</div>
+                <h3>Nómina</h3>
+                <p>Liquidación mensual con deducciones configuradas.</p>
+                <ul class="feature-list">
+                  <li>Salario base</li>
+                  <li>Salud 4% y pensión 4%</li>
+                  <li>Comprobante PDF</li>
+                </ul>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="
+                    showToast('Comprobante PDF generado en modo demostración')
+                  "
+                >
+                  Generar comprobante
+                </button>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Empleados</h2>
+                <span>Asistencia del día: 18/20</span>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Empleado</th>
+                      <th>Identificación</th>
+                      <th>Cargo</th>
+                      <th>Salario</th>
+                      <th>Ingreso</th>
+                      <th>Asistencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>María López</td>
+                      <td>1.088.***</td>
+                      <td>Operaria agrícola</td>
+                      <td>$1.650.000</td>
+                      <td>15/02/2026</td>
+                      <td><span class="status ok">Presente</span></td>
+                    </tr>
+                    <tr>
+                      <td>Carlos Ramírez</td>
+                      <td>1.091.***</td>
+                      <td>Encargado finca</td>
+                      <td>$2.200.000</td>
+                      <td>08/01/2026</td>
+                      <td><span class="status ok">Presente</span></td>
+                    </tr>
+                    <tr>
+                      <td>Ana Torres</td>
+                      <td>1.099.***</td>
+                      <td>Administración</td>
+                      <td>$2.450.000</td>
+                      <td>03/03/2026</td>
+                      <td><span class="status warn">Pendiente</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-reportes">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-070 → RF-077</span>
+                <h1>Reportes y Analytics</h1>
+                <p>
+                  Dashboards, gráficas dinámicas, reportes predefinidos y
+                  personalizados, filtros y comparativas.
+                </p>
+              </div>
+              <div class="actions">
+                <button
+                  class="btn btn-white"
+                  onclick="showToast('Reporte PDF preparado')"
+                >
+                  ⬇ PDF</button
+                ><button
+                  class="btn btn-primary"
+                  onclick="showToast('Archivo Excel .xlsx preparado')"
+                >
+                  ⬇ Excel
+                </button>
+              </div>
+            </div>
+            <div class="grid module-grid">
+              <div class="card module-card">
+                <div class="module-icon">🌾</div>
+                <h3>Producción agrícola</h3>
+                <p>Rendimiento por cultivo, lote y período.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Reporte agrícola generado')"
+                >
+                  Generar
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">🐄</div>
+                <h3>Producción pecuaria</h3>
+                <p>Producción, peso y promedio por animal.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Reporte pecuario generado')"
+                >
+                  Generar
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">💰</div>
+                <h3>Estado financiero</h3>
+                <p>Ingresos, egresos, rentabilidad y flujo.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Reporte financiero generado')"
+                >
+                  Generar
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">📦</div>
+                <h3>Inventarios</h3>
+                <p>Stock, valorización y movimientos.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Reporte de inventarios generado')"
+                >
+                  Generar
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">⚙️</div>
+                <h3>Personalizado</h3>
+                <p>Selecciona campos y filtros para crear tu reporte.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalReporte')"
+                >
+                  Crear reporte
+                </button>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">↔️</div>
+                <h3>Comparativas</h3>
+                <p>Mes actual vs anterior y año actual vs anterior.</p>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="showToast('Comparativa calculada')"
+                >
+                  Comparar
+                </button>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="toolbar">
+                <div class="field">
+                  <label>Desde</label><input type="date" value="2026-08-01" />
+                </div>
+                <div class="field">
+                  <label>Hasta</label><input type="date" value="2026-09-09" />
+                </div>
+                <div class="field">
+                  <label>Tipo</label
+                  ><select>
+                    <option>Todos</option>
+                    <option>Producción</option>
+                    <option>Ventas</option>
+                    <option>Gastos</option>
+                  </select>
+                </div>
+                <button
+                  class="btn btn-primary"
+                  style="align-self: end"
+                  onclick="showToast('Filtros aplicados al reporte')"
+                >
+                  Aplicar filtros
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="page-alertas">
+            <div class="page-head">
+              <div>
+                <span class="eyebrow">RF-080 → RF-084</span>
+                <h1>Alertas y notificaciones</h1>
+                <p>
+                  Centraliza eventos críticos, actividades pendientes y
+                  recordatorios sanitarios.
+                </p>
+              </div>
+              <button class="btn btn-primary" onclick="openModal('modalAlert')">
+                ＋ Configurar alerta
+              </button>
+            </div>
+            <div class="grid module-grid">
+              <div class="card module-card">
+                <div class="module-icon">⚠️</div>
+                <h3>Stock bajo</h3>
+                <p>Productos por debajo del mínimo configurado.</p>
+                <ul class="feature-list">
+                  <li>7 productos requieren revisión</li>
+                  <li>Umbrales configurables</li>
+                </ul>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">💉</div>
+                <h3>Sanitarias</h3>
+                <p>Vacunaciones y desparasitaciones próximas.</p>
+                <ul class="feature-list">
+                  <li>8 aplicaciones próximas</li>
+                  <li>Recordatorios programados</li>
+                </ul>
+              </div>
+              <div class="card module-card">
+                <div class="module-icon">✉️</div>
+                <h3>Email</h3>
+                <p>Eventos críticos enviados por correo.</p>
+                <ul class="feature-list">
+                  <li>SMTP configurable</li>
+                  <li>Preferencias por usuario</li>
+                </ul>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Centro de alertas</h2>
+                <span>Últimos eventos</span>
+              </div>
+              <div class="alerts">
+                <div class="alert">
+                  <div class="aicon">⚠️</div>
+                  <div>
+                    <strong>Stock bajo · Fertilizante NPK</strong>
+                    <p>18 kg disponibles. Mínimo 25 kg. Generada hoy 08:10.</p>
+                  </div>
+                  <span class="status warn">Pendiente</span>
+                </div>
+                <div class="alert">
+                  <div class="aicon">💉</div>
+                  <div>
+                    <strong>Vacunación · Lote bovino</strong>
+                    <p>8 animales requieren vacunación antes del 16/09/2026.</p>
+                  </div>
+                  <span class="status info">Programada</span>
+                </div>
+                <div class="alert">
+                  <div class="aicon">🌾</div>
+                  <div>
+                    <strong>Actividad pendiente · L-03</strong>
+                    <p>Control de plagas programado para mañana.</p>
+                  </div>
+                  <span class="status danger">Urgente</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modales -->
+    <div class="modal" id="modalFinca">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar finca · RF-010</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Nombre</label><input placeholder="Ej. La Esperanza" />
+          </div>
+          <div class="field">
+            <label>Ubicación</label
+            ><input placeholder="Municipio / departamento" />
+          </div>
+          <div class="field">
+            <label>Área total (ha)</label
+            ><input type="number" min="0" oninput="validateArea(this)" />
+          </div>
+          <div class="field">
+            <label>Tipo de suelo</label
+            ><select>
+              <option>Franco</option>
+              <option>Arcilloso</option>
+              <option>Arenoso</option>
+              <option>Franco-arcilloso</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Lotes / parcelas</label
+            ><textarea
+              rows="3"
+              placeholder="Ej. L-01: 4 ha · café | L-02: 3 ha · plátano"
+            ></textarea
+            ><small class="muted"
+              >RF-014: la suma de áreas de lotes no debe superar el área
+              total.</small
+            >
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="
+              saveForm(
+                'Finca registrada correctamente · validación de áreas aplicada',
+              )
+            "
+          >
+            Guardar finca
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalCultivo">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Planificar cultivo · RF-020</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Tipo de cultivo</label><input placeholder="Ej. Café" />
+          </div>
+          <div class="field">
+            <label>Variedad</label><input placeholder="Ej. Caturra" />
+          </div>
+          <div class="field">
+            <label>Lote</label
+            ><select>
+              <option>L-03</option>
+              <option>L-05</option>
+              <option>L-07</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Cantidad de semilla</label
+            ><input placeholder="Kg / unidades" />
+          </div>
+          <div class="field">
+            <label>Fecha de siembra</label><input type="date" />
+          </div>
+          <div class="field">
+            <label>Ciclo (días)</label
+            ><input
+              id="cycle"
+              type="number"
+              value="120"
+              oninput="calculateHarvest()"
+            />
+          </div>
+          <div class="field full">
+            <label>Fecha estimada de cosecha · RF-021</label
+            ><input id="harvest" readonly />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="
+              saveForm('Cultivo planificado y fecha de cosecha calculada')
+            "
+          >
+            Guardar planificación
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalAnimal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar animal · RF-030/031</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Especie</label
+            ><select>
+              <option>Bovino</option>
+              <option>Porcino</option>
+              <option>Ave</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Raza</label><input placeholder="Ej. Holstein" />
+          </div>
+          <div class="field">
+            <label>Sexo</label
+            ><select>
+              <option>Hembra</option>
+              <option>Macho</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Identificación</label><input placeholder="BV-001" />
+          </div>
+          <div class="field">
+            <label>Fecha de nacimiento</label><input type="date" />
+          </div>
+          <div class="field">
+            <label>Código de trazabilidad</label
+            ><input value="TRZ-AG-AUTO" readonly />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="
+              saveForm('Animal registrado con código único de trazabilidad')
+            "
+          >
+            Guardar animal
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalMovimiento">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Movimiento de inventario · RF-040/041</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Tipo</label
+            ><select>
+              <option>Ingreso / compra</option>
+              <option>Salida / consumo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Producto</label><input placeholder="Nombre del insumo" />
+          </div>
+          <div class="field">
+            <label>Cantidad</label><input type="number" min="0" />
+          </div>
+          <div class="field">
+            <label>Precio unitario</label><input type="number" min="0" />
+          </div>
+          <div class="field">
+            <label>Proveedor</label><input placeholder="Proveedor" />
+          </div>
+          <div class="field">
+            <label>Vencimiento</label><input type="date" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Movimiento registrado y stock actualizado')"
+          >
+            Guardar movimiento
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalLabor">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar labor cultural · RF-022/023</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Actividad</label
+            ><select>
+              <option>Riego</option>
+              <option>Fertilización</option>
+              <option>Control de plagas</option>
+              <option>Deshierbe</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Cultivo / lote</label><input placeholder="Café · L-03" />
+          </div>
+          <div class="field">
+            <label>Insumo utilizado</label><input placeholder="Opcional" />
+          </div>
+          <div class="field">
+            <label>Cantidad</label><input type="number" min="0" />
+          </div>
+          <div class="field full">
+            <label>Observaciones</label><textarea rows="3"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="
+              saveForm('Labor registrada y consumo descontado del inventario')
+            "
+          >
+            Guardar labor
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalCosecha">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar cosecha · RF-024</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Cultivo / lote</label><input placeholder="Café · L-03" />
+          </div>
+          <div class="field">
+            <label>Cantidad</label><input type="number" min="0" />
+          </div>
+          <div class="field">
+            <label>Calidad</label
+            ><select>
+              <option>Primera</option>
+              <option>Segunda</option>
+              <option>Mixta</option>
+            </select>
+          </div>
+          <div class="field"><label>Fecha</label><input type="date" /></div>
+          <div class="field full">
+            <label>Destino</label
+            ><input placeholder="Venta / almacenamiento / cliente" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Cosecha registrada en el historial del cultivo')"
+          >
+            Guardar cosecha
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalGasto">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar gasto · RF-050</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field"><label>Concepto</label><input /></div>
+          <div class="field">
+            <label>Categoría</label
+            ><select>
+              <option>Insumos</option>
+              <option>Mano de obra</option>
+              <option>Servicios</option>
+              <option>Mantenimiento</option>
+            </select>
+          </div>
+          <div class="field"><label>Valor</label><input type="number" /></div>
+          <div class="field"><label>Fecha</label><input type="date" /></div>
+          <div class="field full">
+            <label>Asociar a</label
+            ><select>
+              <option>Sin asociación</option>
+              <option>Cultivo</option>
+              <option>Lote</option>
+              <option>Animal</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="
+              saveForm(
+                'Gasto registrado y disponible para cálculo de rentabilidad',
+              )
+            "
+          >
+            Guardar gasto
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalIngreso">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar ingreso · RF-051</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Concepto</label><input placeholder="Venta de cosecha" />
+          </div>
+          <div class="field">
+            <label>Tipo</label
+            ><select>
+              <option>Venta agrícola</option>
+              <option>Venta pecuaria</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field"><label>Valor</label><input type="number" /></div>
+          <div class="field"><label>Fecha</label><input type="date" /></div>
+          <div class="field full"><label>Cliente</label><input /></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Ingreso registrado correctamente')"
+          >
+            Guardar ingreso
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalEmpleado">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar empleado · RF-060</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field"><label>Nombres</label><input /></div>
+          <div class="field"><label>Identificación</label><input /></div>
+          <div class="field"><label>Cargo</label><input /></div>
+          <div class="field"><label>Salario</label><input type="number" /></div>
+          <div class="field">
+            <label>Fecha de ingreso</label><input type="date" />
+          </div>
+          <div class="field">
+            <label>Tipo de contrato</label
+            ><select>
+              <option>Indefinido</option>
+              <option>Fijo</option>
+              <option>Obra o labor</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Empleado registrado con historial laboral')"
+          >
+            Guardar empleado
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalReporte">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Reporte personalizado · RF-073</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field full">
+            <label>Nombre del reporte</label
+            ><input placeholder="Ej. Rentabilidad por lote" />
+          </div>
+          <div class="field">
+            <label>Módulo</label
+            ><select>
+              <option>Agrícola</option>
+              <option>Pecuario</option>
+              <option>Inventarios</option>
+              <option>Financiero</option>
+              <option>RRHH</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Período</label
+            ><select>
+              <option>Este mes</option>
+              <option>Últimos 3 meses</option>
+              <option>Este año</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Campos</label
+            ><textarea
+              rows="3"
+              placeholder="Selecciona o escribe los campos a incluir..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Reporte personalizado generado')"
+          >
+            Generar reporte
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalAlert">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Preferencias de alertas · RF-084</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label>Tipo de alerta</label
+            ><select>
+              <option>Stock bajo</option>
+              <option>Vencimientos</option>
+              <option>Actividades pendientes</option>
+              <option>Eventos sanitarios</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Anticipación</label
+            ><select>
+              <option>30 días</option>
+              <option>15 días</option>
+              <option>7 días</option>
+              <option>1 día</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Canal</label
+            ><select>
+              <option>Dashboard</option>
+              <option>Email</option>
+              <option>Dashboard + Email</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Estado</label
+            ><select>
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            onclick="saveForm('Preferencias de alertas actualizadas')"
+          >
+            Guardar preferencias
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalQuick">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registro rápido</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid module-grid">
+          <button
+            class="quick"
+            onclick="
+              closeModals();
+              openModal('modalFinca');
+            "
+          >
+            🏡<b>Finca</b><span>RF-010</span></button
+          ><button
+            class="quick"
+            onclick="
+              closeModals();
+              openModal('modalCultivo');
+            "
+          >
+            🌱<b>Cultivo</b><span>RF-020</span></button
+          ><button
+            class="quick"
+            onclick="
+              closeModals();
+              openModal('modalAnimal');
+            "
+          >
+            🐄<b>Animal</b><span>RF-030</span></button
+          ><button
+            class="quick"
+            onclick="
+              closeModals();
+              openModal('modalMovimiento');
+            "
+          >
+            📦<b>Inventario</b><span>RF-040/041</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script src="src/js/app.js"></script>
+  </body>
+</html>
