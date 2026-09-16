@@ -6,12 +6,84 @@ function login() {
   showToast("Sesión iniciada como Administrador");
 }
 function logout() {
+  document.getElementById("register").classList.add("hidden");
   document.getElementById("login").classList.remove("hidden");
   showToast("Sesión cerrada");
 }
 function recoverPassword() {
   showToast("Se enviaría un enlace de recuperación por correo (RF-003)");
 }
+
+/* ---------- Registro y navegación entre pantallas ---------- */
+function showRegister() {
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("register").classList.remove("hidden");
+}
+function showLoginScreen() {
+  document.getElementById("register").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+}
+function register() {
+  const name = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const pass = document.getElementById("regPass").value;
+  const pass2 = document.getElementById("regPass2").value;
+  if (!name || !email || !pass) {
+    showToast("Completa todos los campos para registrarte");
+    return;
+  }
+  if (pass !== pass2) {
+    showToast("Las contraseñas no coinciden");
+    return;
+  }
+  showToast("Cuenta creada (prototipo). El registro real requiere backend.");
+  showLoginScreen();
+}
+
+/* ---------- Inicio de sesión con Google (OAuth 2.0, sin SDK) ---------- */
+// 1) Crea un Client ID OAuth 2.0 en Google Cloud Console y pégalo aquí.
+const GOOGLE_CLIENT_ID = "TU_CLIENT_ID.apps.googleusercontent.com";
+// A dónde debe volver Google después de iniciar sesión (esta misma página).
+const GOOGLE_REDIRECT_URI = window.location.origin + window.location.pathname;
+
+function signInWithGoogle() {
+  if (GOOGLE_CLIENT_ID.startsWith("TU_CLIENT_ID")) {
+    showToast(
+      "Falta configurar tu GOOGLE_CLIENT_ID en app.js para activar el inicio de sesión con Google",
+    );
+    return;
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: "token",
+    scope: "openid email profile",
+    prompt: "select_account",
+  });
+  window.location.href =
+    "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
+}
+
+// Al volver de Google, la URL trae el token en el fragmento (#access_token=...)
+function checkGoogleRedirect() {
+  if (!window.location.hash.includes("access_token")) return;
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  if (!accessToken) return;
+  fetch(
+    "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + accessToken,
+  )
+    .then((r) => r.json())
+    .then((profile) => {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("register").classList.add("hidden");
+      logged = true;
+      showToast("Bienvenido/a, " + (profile.name || profile.email));
+      history.replaceState(null, "", window.location.pathname);
+    })
+    .catch(() => showToast("No se pudo obtener el perfil de Google"));
+}
+window.addEventListener("load", checkGoogleRedirect);
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("open");
 }
@@ -168,6 +240,5 @@ function initFinanceChart() {
   });
 }
 window.addEventListener("load", () => {
-  login();
   initProductionChart();
 });
