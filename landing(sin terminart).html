@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgroSen · Gestión agropecuaria integral</title>
+    <meta
+      name="description"
+      content="AgroSen integra la gestión de cultivos, ganado, inventarios y finanzas en una sola plataforma para el campo colombiano."
+    />
+    <style>
+      :root {
+        --primary: #4f8f2f;
+        --primary-dark: #285b32;
+        --accent: #86b94a;
+        --forest: #123d2b;
+        --forest-2: #1e5538;
+        --cream: #f7f8ed;
+        --bg: #f5f7f1;
+        --text: #173b2b;
+        --muted: #64756a;
+        --white: #fff;
+        --border: #dfe8d6;
+        --shadow: 0 16px 45px rgba(29, 67, 39, 0.09);
+        --radius: 22px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.55;
+        overflow-x: hidden;
+      }
+      img {
+        max-width: 100%;
+        display: block;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      ul {
+        list-style: none;
+      }
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 32px;
+      }
+      :focus-visible {
+        outline: 3px solid var(--primary);
+        outline-offset: 3px;
+      }
+
+      /* ---------- Imagen con respaldo mientras no exista el archivo ---------- */
+      .img-slot {
+        position: relative;
+        background: linear-gradient(135deg, #e7f0d9, #d3e4c2);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .img-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .img-slot .img-fallback {
+        display: none;
+        position: absolute;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        color: var(--primary-dark);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
+        padding: 16px;
+      }
+      .img-slot img.broken {
+        display: none;
+      }
+      .img-slot img.broken + .img-fallback {
+        display: flex;
+      }
+
+      /* ---------- Navbar ---------- */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        padding: 18px 0;
+        background: linear-gradient(
+          180deg,
+          rgba(245, 247, 241, 0.96),
+          rgba(245, 247, 241, 0.85)
+        );
+        backdrop-filter: blur(6px);
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 10px 14px 10px 18px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        font-size: 20px;
+      }
+      .logo .mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
+      .logo .mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .logo-agro {
+        color: var(--forest);
+      }
+      .logo-sen {
+        color: var(--primary);
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--forest);
+      }
+      .nav-links a {
+        position: relative;
+        padding: 4px 2px;
+      }
+      .nav-links a.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -6px;
+        height: 2px;
+        background: var(--primary);
+      }
+      .nav-links a:hover {
+        color: var(--primary-dark);
+      }
+      .nav-cta {
+        background: linear-gradient(135deg, var(--primary), #6aa63b);
+        color: #fff;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 11px 20px;
+        border-radius: 999px;
+        box-shadow: 0 8px 20px rgba(79, 143, 47, 0.22);
+        transition: transform 0.15s ease;
+      }
+      .nav-cta:hover {
+        transform: translateY(-1px);
+      }
+      .nav-toggle {
+        display: none;
+        background: none;
+        border: none;
+        padding: 8px;
+        cursor: pointer;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--forest);
+        margin: 5px 0;
+        border-radius: 2px;
+      }
+
+      /* ---------- Hero ---------- */
+      .hero {
+        position: relative;
+        padding: 72px 0 40px;
+        overflow: hidden;
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 56px;
+        align-items: center;
+      }
+      .eyebrow-rule {
+        width: 46px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 4px;
+        margin-bottom: 18px;
+      }
+      h1.wordmark {
+        font-size: clamp(52px, 7vw, 92px);
+        font-weight: 900;
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+      }
+      h1.wordmark .sen {
+        color: var(--primary);
+      }
+      .hero-lede {
+        margin-top: 22px;
+        font-size: 19px;
+        color: var(--text);
+        max-width: 46ch;
+      }
+      .hero-lede strong {
+        font-weight: 800;
+      }
+      .hero-lede .highlight {
+        color: var(--primary-dark);
+        font-weight: 800;
+      }
+
+      .info-panel {
+        margin-top: 34px;
+        display: grid;
+        grid-template-columns: 1.05fr 1.3fr;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .feature-list {
+        padding: 26px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .feature-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .feature-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #dcecc7;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .feature-item h3 {
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+      .feature-item p {
+        font-size: 13.5px;
+        color: var(--muted);
+      }
+
+      .quote-panel {
+        padding: 28px 26px;
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: rgba(247, 248, 237, 0.5);
+      }
+      .quote-mark {
+        font-size: 34px;
+        color: var(--accent);
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 6px;
+        font-family: Georgia, serif;
+      }
+      .quote-panel blockquote {
+        font-size: 15px;
+        color: var(--text);
+      }
+      .quote-panel .tagline {
+        margin-top: 16px;
+        font-weight: 800;
+        color: var(--primary-dark);
+        font-size: 14.5px;
+        border-top: 2px solid var(--border);
+        padding-top: 14px;
+      }
+      .quote-signature {
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .hero-visual {
+        position: relative;
+      }
+      .hero-visual .img-slot {
+        aspect-ratio: 1 / 1;
+        border-radius: 64px;
+      }
+      .hero-waves {
+        position: absolute;
+        left: -60px;
+        right: -60px;
+        bottom: -80px;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      /* ---------- Secciones generales ---------- */
+      section {
+        padding: 88px 0;
+      }
+      .section-head {
+        max-width: 640px;
+        margin-bottom: 44px;
+      }
+      .section-head h2 {
+        font-size: clamp(30px, 4vw, 40px);
+        font-weight: 900;
+        color: var(--forest);
+        letter-spacing: -0.01em;
+      }
+      .section-head p {
+        margin-top: 14px;
+        font-size: 16.5px;
+        color: var(--muted);
+      }
+
+      /* ---------- Problema / Solución ---------- */
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+      }
+      .split-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 30px 28px;
+        box-shadow: var(--shadow);
+      }
+      .split-card h3 {
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .split-card.problema h3 {
+        color: #9a4b2f;
+      }
+      .split-card.solucion h3 {
+        color: var(--primary-dark);
+      }
+      .split-card ul {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .split-card li {
+        font-size: 14.5px;
+        color: var(--text);
+        padding-left: 22px;
+        position: relative;
+      }
+      .split-card.problema li::before {
+        content: "−";
+        position: absolute;
+        left: 0;
+        color: #c47456;
+        font-weight: 900;
+      }
+      .split-card.solucion li::before {
+        content: "＋";
+        position: absolute;
+        left: 0;
+        color: var(--primary);
+        font-weight: 900;
+      }
+
+      /* ---------- Módulos ---------- */
+      .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .module-card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .module-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+      }
+      .module-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #e7f0d9;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+      }
+      .module-card h3 {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+      .module-card p {
+        font-size: 13.5px;
+        color: var(--muted);
+      }
+
+      /* ---------- Nosotros ---------- */
+      .nosotros {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 48px;
+        align-items: center;
+      }
+      .nosotros .img-slot {
+        aspect-ratio: 4 / 3;
+      }
+      .nosotros-copy p {
+        font-size: 16px;
+        color: var(--text);
+        margin-bottom: 16px;
+        max-width: 54ch;
+      }
+      .nosotros-meta {
+        display: flex;
+        gap: 28px;
+        margin-top: 26px;
+        flex-wrap: wrap;
+      }
+      .nosotros-meta div strong {
+        display: block;
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--primary-dark);
+      }
+      .nosotros-meta div span {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* ---------- CTA banda ---------- */
+      .cta-band {
+        background: linear-gradient(135deg, var(--forest), var(--primary-dark));
+        border-radius: 28px;
+        padding: 56px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        color: #fff;
+      }
+      .cta-band h2 {
+        font-size: 28px;
+        font-weight: 900;
+        max-width: 420px;
+      }
+      .cta-band p {
+        color: #d7e6c9;
+        margin-top: 8px;
+        font-size: 15px;
+      }
+      .cta-band .btn-cta {
+        background: #fff;
+        color: var(--primary-dark);
+        font-weight: 800;
+        font-size: 15px;
+        padding: 14px 26px;
+        border-radius: 999px;
+        white-space: nowrap;
+        transition: transform 0.15s ease;
+      }
+      .cta-band .btn-cta:hover {
+        transform: translateY(-2px);
+      }
+
+      /* ---------- Footer ---------- */
+      footer {
+        padding: 56px 0 30px;
+        border-top: 1px solid var(--border);
+        margin-top: 40px;
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+      .footer-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+      .footer-logo .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+      }
+      .footer-logo .mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      footer p.desc {
+        font-size: 13.5px;
+        color: var(--muted);
+        max-width: 34ch;
+      }
+      footer h4 {
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--forest);
+        margin-bottom: 14px;
+      }
+      footer ul {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      footer ul a {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      footer ul a:hover {
+        color: var(--primary-dark);
+      }
+      .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12.5px;
+        color: var(--muted);
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* ---------- Responsive ---------- */
+      @media (max-width: 900px) {
+        .hero-grid,
+        .nosotros {
+          grid-template-columns: 1fr;
+        }
+        .hero-visual {
+          order: -1;
+          width: 100%;
+          max-width: 340px;
+          margin: 0 auto;
+        }
+        .info-panel {
+          grid-template-columns: 1fr;
+        }
+        .quote-panel {
+          border-left: none;
+          border-top: 1px solid var(--border);
+        }
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .modules-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .cta-band {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 0 18px;
+        }
+        .nav-links {
+          position: fixed;
+          top: 78px;
+          left: 18px;
+          right: 18px;
+          background: #fff;
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 18px;
+          box-shadow: var(--shadow);
+          display: none;
+          gap: 14px;
+        }
+        .nav-links.open {
+          display: flex;
+        }
+        .nav-toggle {
+          display: block;
+        }
+        .nav-cta {
+          display: none;
+        }
+        .modules-grid {
+          grid-template-columns: 1fr;
+        }
+        section {
+          padding: 60px 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+
+      /* ---------- Entrada única del hero ---------- */
+      .hero-anim {
+        animation: rise 0.7s ease both;
+      }
+      .hero-anim.d2 {
+        animation-delay: 0.08s;
+      }
+      .hero-anim.d3 {
+        animation-delay: 0.16s;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <nav>
+          <a href="#inicio" class="logo">
+            <span class="mark img-slot">
+              <img
+                src="/src/img/LogoAgrosen.png"
+                alt="Logo AgroSen"
+                onerror="this.classList.add('broken')"
+              />
+            </span>
+            <span
+              ><span class="logo-agro">Agro</span
+              ><span class="logo-sen">Sen</span></span
+            >
+          </a>
+          <ul class="nav-links" id="navLinks">
+            <li><a href="#inicio" class="active">Inicio</a></li>
+            <li><a href="#modulos">Módulos</a></li>
+            <li><a href="#nosotros">Nosotros</a></li>
+            <li><a href="#contacto">Contacto</a></li>
+          </ul>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <a href="index.html" class="nav-cta">Iniciar sesión</a>
+            <button
+              class="nav-toggle"
+              id="navToggle"
+              aria-label="Abrir menú"
+              aria-expanded="false"
+            >
+              <span></span><span></span><span></span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- ================= HERO ================= -->
+      <section class="hero" id="inicio" style="padding-top: 56px">
+        <div class="wrap">
+          <div class="hero-grid">
+            <div>
+              <div class="eyebrow-rule hero-anim"></div>
+              <h1 class="wordmark hero-anim">
+                Agro<span class="sen">Sen</span>
+              </h1>
+              <p class="hero-lede hero-anim d2">
+                <strong>AgroSen</strong> integra la gestión de cultivos,
+                actividades pecuarias, inventarios y finanzas
+                <span class="highlight">en una sola plataforma</span> pensada
+                para el campo colombiano.
+              </p>
+
+              <div class="info-panel hero-anim d3">
+                <div class="feature-list">
+                  <div class="feature-item">
+                    <span class="feature-icon">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 21c-4-2-7-6-7-11a7 7 0 0 1 14 0c0 5-3 9-7 11Z"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        />
+                        <path
+                          d="M12 21V9"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </span>
+                    <div>
+                      <h3>Cultivos</h3>
+                      <p>
+                        Planifica la siembra y haz seguimiento a cada cultivo
+                        hasta la cosecha.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="feature-item">
+                    <span class="feature-icon">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M6 10c-1.7 0-3-1.1-3-2.5S4.3 5 6 5c.7 0 1.3.6 1.3 1.3M18 10c1.7 0 3-1.1 3-2.5S19.7 5 18 5c-.7 0-1.3.6-1.3 1.3"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M6.5 11c0-2.2 2.5-4 5.5-4s5.5 1.8 5.5 4v3.5c0 2.5-2.5 4.5-5.5 4.5s-5.5-2-5.5-4.5V11Z"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                        />
+                        <path
+                          d="M9.5 13.2c.6.4 1.6.7 2.5.7s1.9-.3 2.5-.7"
+                          stroke="currentColor"
+                          stroke-width="1.4"
+                          stroke-linecap="round"
+                        />
+                        <circle cx="9.7" cy="10.8" r=".9" fill="currentColor" />
+                        <circle
+                          cx="14.3"
+                          cy="10.8"
+                          r=".9"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                    <div>
+                      <h3>Pecuaria</h3>
+                      <p>
+                        Controla la sanidad, reproducción y producción de tu
+                        ganado.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="feature-item">
+                    <span class="feature-icon">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M3 8l9-5 9 5-9 5-9-5Z"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M3 8v8l9 5 9-5V8"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M12 13v8"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                        />
+                      </svg>
+                    </span>
+                    <div>
+                      <h3>Inventarios y finanzas</h3>
+                      <p>
+                        Lleva el control de insumos, stock y del dinero que
+                        entra y sale.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="quote-panel">
+                  <div>
+                    <div class="quote-mark">&ldquo;</div>
+                    <blockquote>
+                      AgroSen nace para cerrar la brecha tecnológica del sector
+                      agropecuario colombiano: un solo sistema donde productores
+                      y administradores gestionan cultivos, animales, inventario
+                      y finanzas sin necesitar conocimientos técnicos avanzados.
+                    </blockquote>
+                  </div>
+                  <div>
+                    <p class="tagline">
+                      Donde la tradición del campo se encuentra con la
+                      tecnología para cultivar el futuro.
+                    </p>
+                    <div class="quote-signature">— Equipo AgroSen</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-visual hero-anim d2">
+              <div class="img-slot">
+                <img
+                  src="/src/img/LogoAgrosen.png"
+                  alt="Ilustración de gota con hoja sobre un cultivo"
+                  onerror="this.classList.add('broken')"
+                />
+              </div>
+              <svg
+                class="hero-waves"
+                viewBox="0 0 600 200"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M0,120 C150,180 300,60 600,140 L600,200 L0,200 Z"
+                  fill="#dcecc7"
+                  opacity="0.7"
+                />
+                <path
+                  d="M0,150 C200,90 400,190 600,110 L600,200 L0,200 Z"
+                  fill="#c3dba3"
+                  opacity="0.55"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PROBLEMA / SOLUCIÓN ================= -->
+      <section id="problema">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>
+              El campo colombiano gestiona a mano lo que ya podría ser digital
+            </h2>
+            <p>
+              El sector agropecuario representa cerca del 6.3% del PIB nacional
+              y emplea a más del 15% de la población trabajadora, pero sigue
+              siendo uno de los sectores con menor adopción tecnológica del
+              país.
+            </p>
+          </div>
+          <div class="split">
+            <div class="split-card problema">
+              <h3>Lo que hoy complica el día a día</h3>
+              <ul>
+                <li>
+                  Registros manuales que toman tiempo y se prestan a errores
+                </li>
+                <li>Poca información a tiempo para tomar decisiones</li>
+                <li>
+                  Dificultad para saber cuánto cuesta y cuánto deja cada
+                  actividad
+                </li>
+                <li>Datos que se pierden por no tener respaldo</li>
+                <li>
+                  Inventarios que generan desperdicio por falta de control
+                </li>
+              </ul>
+            </div>
+            <div class="split-card solucion">
+              <h3>Lo que AgroSen pone en su lugar</h3>
+              <ul>
+                <li>
+                  Toda la información de la finca centralizada en un solo lugar
+                </li>
+                <li>Cálculos y reportes que se generan solos</li>
+                <li>
+                  Visibilidad en tiempo real de cultivos, animales e inventario
+                </li>
+                <li>Respaldo automático de la información</li>
+                <li>Análisis de rentabilidad por actividad o producto</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MÓDULOS ================= -->
+      <section id="modulos" style="background: var(--cream)">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>Un módulo para cada parte de la operación</h2>
+            <p>
+              Nueve módulos que cubren la finca de punta a punta, desde la
+              siembra hasta la nómina del personal.
+            </p>
+          </div>
+          <div class="modules-grid">
+            <div class="module-card">
+              <span class="module-icon">🏡</span>
+              <h3>Fincas y lotes</h3>
+              <p>
+                Registra tus predios y divide cada uno en lotes según su uso.
+              </p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">🌱</span>
+              <h3>Agrícola</h3>
+              <p>
+                Planifica, siembra y da seguimiento a cada cultivo hasta la
+                cosecha.
+              </p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">🐄</span>
+              <h3>Pecuario</h3>
+              <p>
+                Control individual de cada animal: sanidad, reproducción y
+                producción.
+              </p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">📦</span>
+              <h3>Inventarios</h3>
+              <p>
+                Insumos y productos con alertas automáticas de reabastecimiento.
+              </p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">💰</span>
+              <h3>Financiero</h3>
+              <p>Ingresos, egresos y rentabilidad por actividad o producto.</p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">👥</span>
+              <h3>Recursos humanos</h3>
+              <p>Personal, asistencia y nómina del equipo de la finca.</p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">📊</span>
+              <h3>Reportes</h3>
+              <p>
+                Dashboards y exportación de datos para tomar mejores decisiones.
+              </p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">🔔</span>
+              <h3>Alertas</h3>
+              <p>Avisos de stock bajo, vencimientos y tareas pendientes.</p>
+            </div>
+            <div class="module-card">
+              <span class="module-icon">🔐</span>
+              <h3>Roles y seguridad</h3>
+              <p>Cada usuario ve solo lo que le corresponde según su rol.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= NOSOTROS ================= -->
+      <section id="nosotros">
+        <div class="wrap">
+          <div class="nosotros">
+            <div class="img-slot">
+              <img
+                src="/src/img/nosotros.jpg"
+                alt="Cultivo en el campo colombiano"
+                onerror="this.classList.add('broken')"
+              />
+              <span class="img-fallback">🖼️<br />/src/img/nosotros.jpg</span>
+            </div>
+            <div class="nosotros-copy">
+              <div class="section-head" style="margin-bottom: 20px">
+                <h2>Un proyecto formativo con un problema real detrás</h2>
+              </div>
+              <p>
+                AgroSen es el proyecto de formación del Tecnólogo en Análisis y
+                Desarrollo de Software del SENA, Regional Risaralda. Nace de una
+                necesidad concreta: la mayoría de productores agropecuarios del
+                país siguen gestionando su operación con cuadernos, hojas de
+                cálculo sueltas o de memoria.
+              </p>
+              <p>
+                El objetivo es simple: que un productor, sin conocimientos
+                técnicos avanzados, pueda llevar el control completo de su finca
+                desde el celular o el computador, y tomar mejores decisiones con
+                información real y a tiempo.
+              </p>
+              <div class="nosotros-meta">
+                <div><strong>9</strong><span>Módulos integrados</span></div>
+                <div>
+                  <strong>1</strong><span>Plataforma, toda la finca</span>
+                </div>
+                <div>
+                  <strong>100%</strong
+                  ><span>Pensado para el campo colombiano</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CTA ================= -->
+      <section id="contacto">
+        <div class="wrap">
+          <div class="cta-band">
+            <div>
+              <h2>Empieza a gestionar tu finca hoy</h2>
+              <p>
+                Entra a la plataforma y registra tu primera finca en minutos.
+              </p>
+            </div>
+            <a href="index.html" class="btn-cta">Ir a la plataforma →</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="footer-grid">
+          <div>
+            <div class="footer-logo">
+              <span class="mark img-slot">
+                <img
+                  src="/src/img/LogoAgrosen.png"
+                  alt="Logo AgroSen"
+                  onerror="this.classList.add('broken')"
+                />
+                <span class="img-fallback" style="font-size: 9px">🖼️</span>
+              </span>
+              <span
+                ><span class="logo-agro">Agro</span
+                ><span class="logo-sen">Sen</span></span
+              >
+            </div>
+            <p class="desc">
+              Sistema integral de gestión agropecuaria. Proyecto formativo SENA.
+            </p>
+          </div>
+          <div>
+            <h4>Navegación</h4>
+            <ul>
+              <li><a href="#inicio">Inicio</a></li>
+              <li><a href="#modulos">Módulos</a></li>
+              <li><a href="#nosotros">Nosotros</a></li>
+              <li><a href="index.html">Iniciar sesión</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Contacto</h4>
+            <ul>
+              <li>
+                <a href="mailto:contacto@agrosen.co">contacto@agrosen.co</a>
+              </li>
+              <li><a href="#">SENA Regional Risaralda</a></li>
+              <li><a href="#">Pereira, Colombia</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 AgroSen. Proyecto formativo SENA.</span>
+          <span>Hecho en Pereira, Risaralda.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const navToggle = document.getElementById("navToggle");
+      const navLinks = document.getElementById("navLinks");
+      navToggle.addEventListener("click", () => {
+        const isOpen = navLinks.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", String(isOpen));
+      });
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          navLinks.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        });
+      });
+    </script>
+  </body>
+</html>
