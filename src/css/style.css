@@ -1,159 +1,212 @@
+/* ============================================================
+   AgroSen — style.css
+   Sistema Integral de Gestión Agropecuaria
+   Equipo: Juan Esteban Nieto, Valeria Franco,
+           Daniela Ilian, Juan Esteban González
+   Ficha: 3240030 · SENA ADSO 2026
+   ============================================================
+
+   ÍNDICE DE SECCIONES
+   ─────────────────────────────────────────────────────────────
+   1.  VARIABLES (Design Tokens)
+   2.  RESET / BASE
+   3.  LAYOUT PRINCIPAL
+       3.1  Grid raíz (.app)
+       3.2  Sidebar (menú lateral)
+       3.3  Topbar (barra superior)
+       3.4  Área de contenido
+   4.  NAVEGACIÓN DEL SIDEBAR
+       4.1  Marca / Logo
+       4.2  Títulos de sección del menú
+       4.3  Botones de navegación (.nav-item)
+       4.4  Footer del sidebar
+   5.  PÁGINAS (secciones del sistema)
+       5.1  Cabecera de página (.page-head)
+       5.2  Eyebrow (etiqueta de módulo)
+   6.  COMPONENTES GENERALES
+       6.1  Botones (.btn)
+       6.2  Grid de contenido
+       6.3  Cards (tarjetas)
+       6.4  KPI cards (métricas del dashboard)
+       6.5  Alertas y notificaciones de la UI
+       6.6  Accesos rápidos del dashboard
+       6.7  Cards de módulos (página de inicio)
+       6.8  Gráficas (Chart.js)
+   7.  FORMULARIOS
+       7.1  Campo de texto / select / textarea
+       7.2  Barra de herramientas (toolbar)
+   8.  TABLAS DE DATOS
+   9.  MODALES
+  10.  AUTENTICACIÓN (Login y Registro)
+  11.  TOAST (notificación flotante)
+  12.  UTILIDADES
+  13.  RESPONSIVE
+       13.1 ≤ 1100px (sidebar colapsado)
+       13.2 ≤ 760px  (móvil, sidebar oculto)
+       13.3 ≤ 450px  (móvil pequeño)
+   ──────────────────────────────────────────────────────────── */
+
+/* ============================================================
+   1. VARIABLES (Design Tokens)
+   Paleta de colores, tamaños y valores reutilizables.
+   Definidas en :root para que sean accesibles en todo el CSS.
+   En React + Tailwind: estos tokens irían en tailwind.config.js.
+   En React + CSS Modules: en un archivo variables.css global.
+   ============================================================ */
+
 :root {
-  --primary: #4f8f2f;
-  --primary-dark: #285b32;
-  --accent: #86b94a;
-  --forest: #123d2b;
-  --forest-2: #1e5538;
-  --cream: #f7f8ed;
-  --bg: #f5f7f1;
-  --text: #173b2b;
-  --muted: #64756a;
-  --white: #fff;
-  --border: #dfe8d6;
-  --danger: #c94b4b;
-  --warning: #d99a2b;
-  --info: #3b82b8;
-  --shadow: 0 16px 45px rgba(29, 67, 39, 0.09);
-  --radius: 22px;
+  /* ── Paleta de verdes (marca AgroSen) ── */
+  --primary: #4f8f2f; /* verde principal — botones, acentos */
+  --primary-dark: #285b32; /* verde oscuro — hover, textos sobre fondo claro */
+  --accent: #86b94a; /* verde claro brillante — detalles, íconos */
+  --forest: #123d2b; /* verde muy oscuro — sidebar, fondo de login */
+  --forest-2: #1e5538; /* verde oscuro secundario — gradiente del sidebar */
+
+  /* ── Fondos y superficies ── */
+  --cream: #f7f8ed; /* crema suave — fondo de elementos destacados */
+  --bg: #f5f7f1; /* fondo general de la app */
+  --white: #fff; /* blanco puro — cards, modales */
+
+  /* ── Texto ── */
+  --text: #173b2b; /* texto principal — casi negro verdoso */
+  --muted: #64756a; /* texto secundario — etiquetas, subtítulos */
+
+  /* ── Bordes ── */
+  --border: #dfe8d6; /* borde suave — divisores, contornos de inputs */
+
+  /* ── Colores semánticos (estados) ── */
+  --danger: #c94b4b; /* rojo — errores, alertas críticas */
+  --warning: #d99a2b; /* amarillo — advertencias */
+  --info: #3b82b8; /* azul — información */
+
+  /* ── Sombras y geometría ── */
+  --shadow: 0 16px 45px rgba(29, 67, 39, 0.09); /* sombra global de cards */
+  --radius: 22px; /* radio de esquinas de cards */
 }
+
+/* ============================================================
+   2. RESET / BASE
+   Normaliza el comportamiento del navegador y establece
+   los estilos base del documento.
+   ============================================================ */
+
+/* Box model: incluir padding y border dentro del width/height */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: smooth; /* desplazamiento suave al navegar con anclas */
 }
+
 body {
-  font-family:
-    Inter,
-    Segoe UI,
-    Arial,
-    sans-serif;
+  font-family: Inter, "Segoe UI", Arial, sans-serif; /* tipografía principal */
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
-  overflow-x: hidden;
+  overflow-x: hidden; /* evitar scroll horizontal no deseado */
 }
+
+/* Herencia de fuente para elementos de formulario
+   (por defecto el navegador no la hereda) */
 button,
 input,
 select,
 textarea {
   font: inherit;
 }
+
 button {
   cursor: pointer;
 }
+
 a {
   text-decoration: none;
   color: inherit;
 }
+
+/* ============================================================
+   3. LAYOUT PRINCIPAL
+   Estructura de grilla de la app: sidebar fijo a la izquierda
+   y área de contenido a la derecha.
+   ============================================================ */
+
+/* ── 3.1 Grid raíz ─────────────────────────────────────────── */
+
+/**
+ * .app
+ * Contenedor raíz de la aplicación (cuando el usuario está
+ * autenticado). Crea una grilla de 2 columnas:
+ *   Columna 1: 260px → sidebar
+ *   Columna 2: 1fr   → contenido principal
+ */
 .app {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
 }
+
+/* ── 3.2 Sidebar ───────────────────────────────────────────── */
+
+/**
+ * .sidebar
+ * Menú lateral fijo que siempre se mantiene visible al hacer
+ * scroll. Gradiente vertical de verde oscuro.
+ * En móvil (< 760px) se oculta y se abre con toggleSidebar().
+ */
 .sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
+  position: fixed; /* fijo en pantalla, no sigue el scroll */
+  inset: 0 auto 0 0; /* pegado: arriba, derecha=auto, abajo, izquierda=0 */
   width: 260px;
   background: linear-gradient(180deg, #123d2b, #1d5538);
   color: #fff;
   padding: 22px 16px;
-  z-index: 30;
-  overflow: auto;
+  z-index: 30; /* encima de casi todo menos login (#100) y toast (#120) */
+  overflow: auto; /* scroll interno si el menú es muy largo */
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  margin-bottom: 18px;
-}
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #a9d16d, #4f8f2f);
-  display: grid;
-  place-items: center;
-  font-size: 23px;
-}
-.brand strong {
-  font-size: 22px;
-}
-.brand strong span {
-  color: #a9d16d;
-}
-.brand small {
-  display: block;
-  color: #b9cdbd;
-  font-size: 10px;
-  margin-top: 2px;
-}
-.nav-title {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: #9db8a4;
-  margin: 18px 10px 8px;
-}
-.nav-item {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: #dce9df;
-  padding: 11px 12px;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-  margin: 3px 0;
-  transition: 0.2s;
-}
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-.nav-item .ico {
-  width: 23px;
-  text-align: center;
-}
-.sidebar-footer {
-  margin-top: 22px;
-  padding: 15px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  color: #c8d8cb;
-  font-size: 12px;
-}
-.main {
-  grid-column: 2;
-  min-width: 0;
-}
+
+/* ── 3.3 Topbar ────────────────────────────────────────────── */
+
+/**
+ * .topbar
+ * Barra de navegación superior fija. Contiene el breadcrumb,
+ * botones de acción (notificaciones) y datos del usuario.
+ * El blur y la transparencia dan un efecto "glassmorphism".
+ */
 .topbar {
   height: 76px;
-  position: sticky;
+  position: sticky; /* se queda fija al hacer scroll */
   top: 0;
   z-index: 20;
-  background: rgba(245, 247, 241, 0.9);
-  backdrop-filter: blur(16px);
+  background: rgba(245, 247, 241, 0.9); /* fondo semitransparente */
+  backdrop-filter: blur(16px); /* difumina lo que hay detrás */
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
 }
+
+/**
+ * .mobile-menu
+ * Botón de hamburguesa visible solo en móvil (< 760px).
+ * Abre y cierra el sidebar al hacer clic.
+ */
 .mobile-menu {
-  display: none;
+  display: none; /* oculto por defecto, se muestra en media query */
   border: 0;
   background: #e6efdf;
   border-radius: 10px;
   padding: 9px;
 }
+
+/**
+ * .crumb
+ * Breadcrumb de la topbar que muestra el módulo activo.
+ * El texto lo actualiza showPage() en app.js.
+ */
 .crumb {
   font-size: 13px;
   color: var(--muted);
@@ -161,38 +214,66 @@ a {
 .crumb strong {
   color: var(--forest);
 }
+
+/**
+ * .top-actions
+ * Contenedor de los botones de acción de la topbar
+ * (notificaciones, ajustes, perfil de usuario).
+ */
 .top-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
+/**
+ * .icon-btn
+ * Botón circular de ícono (ej: campana de notificaciones).
+ * Tiene .badge para mostrar el conteo de elementos pendientes.
+ */
 .icon-btn {
   width: 40px;
   height: 40px;
   border: 1px solid var(--border);
   background: #fff;
   border-radius: 12px;
-  position: relative;
+  position: relative; /* necesario para posicionar .badge */
 }
+
+/**
+ * .badge
+ * Contador rojo sobre el .icon-btn que indica
+ * elementos pendientes (alertas, notificaciones).
+ */
 .badge {
   position: absolute;
   right: -2px;
   top: -3px;
   background: var(--danger);
   color: #fff;
-  border-radius: 99px;
+  border-radius: 99px; /* píldora perfecta */
   font-size: 9px;
   min-width: 17px;
   height: 17px;
   display: grid;
   place-items: center;
 }
+
+/**
+ * .user
+ * Sección de usuario en la topbar: avatar + nombre + rol.
+ */
 .user {
   display: flex;
   align-items: center;
   gap: 10px;
   padding-left: 10px;
 }
+
+/**
+ * .avatar
+ * Círculo con las iniciales del usuario cuando no hay foto.
+ */
 .avatar {
   width: 38px;
   height: 38px;
@@ -203,21 +284,182 @@ a {
   place-items: center;
   font-weight: 800;
 }
+
 .user small {
   display: block;
   color: var(--muted);
 }
+
+/* ── 3.4 Área de contenido ─────────────────────────────────── */
+
+/**
+ * .main
+ * Contenedor del área derecha (todo lo que no es sidebar).
+ * grid-column: 2 lo posiciona en la segunda columna de .app.
+ */
+.main {
+  grid-column: 2;
+  min-width: 0; /* evita overflow en grids cuando el contenido es ancho */
+}
+
+/**
+ * .content
+ * Padding interior del área de contenido.
+ * max-width y margin: auto centran el contenido en pantallas grandes.
+ */
 .content {
   padding: 30px;
   max-width: 1600px;
   margin: auto;
 }
+
+/* ============================================================
+   4. NAVEGACIÓN DEL SIDEBAR
+   Estilos de los elementos dentro del menú lateral.
+   ============================================================ */
+
+/* ── 4.1 Marca / Logo ──────────────────────────────────────── */
+
+/**
+ * .brand
+ * Sección superior del sidebar con el logo y nombre de la app.
+ */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 18px;
+}
+
+/**
+ * .brand-mark
+ * Ícono cuadrado redondeado con el emoji o logo de AgroSen.
+ * El gradiente va de verde claro a verde oscuro.
+ */
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #a9d16d, #4f8f2f);
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+}
+
+.brand strong {
+  font-size: 22px;
+}
+
+/* "Sen" en color verde claro para resaltar la segunda parte del nombre */
+.brand strong span {
+  color: #a9d16d;
+}
+
+.brand small {
+  display: block;
+  color: #b9cdbd; /* texto secundario sobre fondo oscuro */
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* ── 4.2 Títulos de sección del menú ───────────────────────── */
+
+/**
+ * .nav-title
+ * Etiqueta pequeña que agrupa elementos del menú
+ * (ej: "MÓDULOS", "SISTEMA").
+ */
+.nav-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #9db8a4; /* verde grisáceo sobre fondo oscuro */
+  margin: 18px 10px 8px;
+}
+
+/* ── 4.3 Botones de navegación ─────────────────────────────── */
+
+/**
+ * .nav-item
+ * Cada botón del menú lateral que cambia la sección activa.
+ * En estado normal: fondo transparente.
+ * En :hover y .active: fondo blanco semitransparente.
+ */
+.nav-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #dce9df; /* texto claro sobre fondo oscuro */
+  padding: 11px 12px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  margin: 3px 0;
+  transition: 0.2s; /* suaviza el cambio de color */
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/**
+ * .nav-item .ico
+ * Contenedor del ícono (emoji o SVG) dentro del botón de menú.
+ * Ancho fijo para alinear todos los íconos verticalmente.
+ */
+.nav-item .ico {
+  width: 23px;
+  text-align: center;
+}
+
+/* ── 4.4 Footer del sidebar ────────────────────────────────── */
+
+/**
+ * .sidebar-footer
+ * Sección al final del sidebar con info de la app (versión, etc.).
+ */
+.sidebar-footer {
+  margin-top: 22px;
+  padding: 15px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  color: #c8d8cb;
+  font-size: 12px;
+}
+
+/* ============================================================
+   5. PÁGINAS (secciones del sistema)
+   Cada módulo del sistema tiene un elemento .page que se
+   muestra u oculta con la clase .active.
+   ============================================================ */
+
+/**
+ * .page
+ * Cada sección del sistema (dashboard, fincas, agrícola…).
+ * Oculta por defecto. Se muestra cuando tiene la clase .active.
+ */
 .page {
   display: none;
 }
+
 .page.active {
   display: block;
 }
+
+/* ── 5.1 Cabecera de página ─────────────────────────────────── */
+
+/**
+ * .page-head
+ * Encabezado de cada sección con el título, descripción
+ * y botones de acción (ej: "Nueva Finca").
+ * Usa flexbox para alinear título (izquierda) y botones (derecha).
+ */
 .page-head {
   display: flex;
   justify-content: space-between;
@@ -225,6 +467,35 @@ a {
   align-items: flex-end;
   margin-bottom: 24px;
 }
+
+.page-head h1 {
+  font-size: clamp(28px, 4vw, 42px); /* responsive: entre 28px y 42px */
+  letter-spacing: -1.5px;
+  margin: 8px 0 4px;
+}
+
+.page-head p {
+  color: var(--muted);
+  max-width: 700px;
+}
+
+/**
+ * .actions
+ * Contenedor de los botones de la cabecera de página.
+ */
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap; /* los botones se envuelven en pantallas pequeñas */
+}
+
+/* ── 5.2 Eyebrow (etiqueta de módulo) ──────────────────────── */
+
+/**
+ * .eyebrow
+ * Píldora pequeña sobre el título de la página que indica
+ * a qué módulo pertenece (ej: "MÓDULO AGRÍCOLA").
+ */
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -239,20 +510,24 @@ a {
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
-.page-head h1 {
-  font-size: clamp(28px, 4vw, 42px);
-  letter-spacing: -1.5px;
-  margin: 8px 0 4px;
-}
-.page-head p {
-  color: var(--muted);
-  max-width: 700px;
-}
-.actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+
+/* ============================================================
+   6. COMPONENTES GENERALES
+   Bloques reutilizables en múltiples secciones del sistema.
+   ============================================================ */
+
+/* ── 6.1 Botones ───────────────────────────────────────────── */
+
+/**
+ * .btn
+ * Clase base para todos los botones del sistema.
+ * Requiere una clase modificadora de color:
+ *   .btn-primary → verde (acción principal)
+ *   .btn-soft    → verde claro (acción secundaria)
+ *   .btn-white   → blanco con borde (neutro)
+ *   .btn-danger  → rojo claro (acción destructiva)
+ *   .btn-sm      → tamaño pequeño (tablas, listas)
+ */
 .btn {
   border: 0;
   border-radius: 12px;
@@ -264,38 +539,98 @@ a {
   gap: 8px;
   transition: 0.2s;
 }
+
+/* Efecto de elevación al pasar el cursor */
 .btn:hover {
   transform: translateY(-1px);
 }
+
+/* Verde degradado — acción principal (Guardar, Crear, etc.) */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), #6aa63b);
   color: #fff;
   box-shadow: 0 8px 20px rgba(79, 143, 47, 0.18);
 }
+
+/* Verde muy claro — acción secundaria (Filtrar, Ver, etc.) */
 .btn-soft {
   background: #e7f0d9;
   color: var(--primary-dark);
 }
+
+/* Blanco con borde — acción neutra (Cancelar, Exportar, etc.) */
 .btn-white {
   background: #fff;
   border: 1px solid var(--border);
   color: var(--forest);
 }
+
+/* Rojo claro — acción destructiva (Eliminar, etc.) */
 .btn-danger {
   background: #fae7e7;
   color: #a33b3b;
 }
+
+/* Variante pequeña — para botones dentro de tablas o listas */
 .btn-sm {
   padding: 7px 10px;
   font-size: 12px;
 }
+
+/* ── 6.2 Grid de contenido ─────────────────────────────────── */
+
+/**
+ * .grid
+ * Grilla base reutilizable. No define el número de columnas:
+ * eso lo hace una clase modificadora específica de contexto:
+ *   .kpis          → 4 columnas (métricas del dashboard)
+ *   .dashboard-grid → 1.5fr / 1fr (gráfica + alertas)
+ *   .module-grid   → 3 columnas (cards de módulos)
+ *   .quick-grid    → 4 columnas (accesos rápidos)
+ *   .form-grid     → 2 columnas (formularios)
+ */
 .grid {
   display: grid;
   gap: 18px;
 }
+
+/* Columnas de las métricas del dashboard */
 .kpis {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+
+/* Distribución del dashboard: gráfica grande + panel lateral */
+.dashboard-grid {
+  grid-template-columns: 1.5fr 1fr;
+}
+
+/* Cards de los módulos del sistema */
+.module-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Accesos rápidos en el dashboard */
+.quick-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Formularios de 2 columnas */
+.form-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Elemento que ocupa el ancho completo dentro de .form-grid */
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+/* ── 6.3 Cards ─────────────────────────────────────────────── */
+
+/**
+ * .card
+ * Tarjeta base de contenido. Fondo blanco semitransparente
+ * con borde y sombra sutil.
+ */
 .card {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid var(--border);
@@ -303,11 +638,46 @@ a {
   box-shadow: 0 8px 28px rgba(38, 76, 41, 0.045);
   padding: 20px;
 }
+
+/**
+ * .card-head
+ * Cabecera interna de una card: título a la izquierda,
+ * subtítulo/acción a la derecha.
+ */
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-head h2 {
+  font-size: 17px;
+}
+.card-head span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── 6.4 KPI cards ─────────────────────────────────────────── */
+
+/**
+ * .kpi
+ * Variante de card para métricas numéricas del dashboard.
+ * Distribuye el ícono a la derecha y el número + etiqueta
+ * a la izquierda.
+ */
 .kpi {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
+
+/**
+ * .kpi .icon
+ * Ícono cuadrado redondeado dentro de la KPI card.
+ */
 .kpi .icon {
   width: 45px;
   height: 45px;
@@ -317,15 +687,24 @@ a {
   place-items: center;
   font-size: 21px;
 }
+
 .kpi h3 {
-  font-size: 29px;
+  font-size: 29px; /* número grande y prominente */
   margin: 8px 0 2px;
 }
+
+/* Texto descriptivo del indicador */
 .kpi p,
 .muted {
   color: var(--muted);
   font-size: 12px;
 }
+
+/**
+ * .trend
+ * Píldora verde que muestra la variación porcentual
+ * del indicador respecto al período anterior.
+ */
 .trend {
   font-size: 11px;
   color: var(--primary-dark);
@@ -333,30 +712,25 @@ a {
   padding: 4px 8px;
   border-radius: 99px;
 }
-.dashboard-grid {
-  grid-template-columns: 1.5fr 1fr;
-}
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.card-head h2 {
-  font-size: 17px;
-}
-.card-head span {
-  font-size: 12px;
-  color: var(--muted);
-}
-.chart-box {
-  height: 280px;
-}
+
+/* ── 6.5 Alertas y notificaciones de la UI ─────────────────── */
+
+/**
+ * .alerts
+ * Contenedor de la lista de alertas del panel lateral
+ * del dashboard.
+ */
 .alerts {
   display: grid;
   gap: 10px;
 }
+
+/**
+ * .alert
+ * Una alerta individual: ícono a la izquierda + texto.
+ * No confundir con los toasts: estos son permanentes
+ * en la UI hasta que el usuario los gestione.
+ */
 .alert {
   display: flex;
   gap: 12px;
@@ -365,14 +739,21 @@ a {
   border: 1px solid var(--border);
   background: #fbfcf8;
 }
+
+/**
+ * .alert .aicon
+ * Ícono cuadrado dentro de la alerta.
+ * El fondo amarillo indica advertencia.
+ */
 .alert .aicon {
   width: 35px;
   height: 35px;
   border-radius: 11px;
   display: grid;
   place-items: center;
-  background: #fff2d9;
+  background: #fff2d9; /* fondo amarillo suave */
 }
+
 .alert strong {
   font-size: 13px;
 }
@@ -381,9 +762,14 @@ a {
   color: var(--muted);
   margin-top: 2px;
 }
-.quick-grid {
-  grid-template-columns: repeat(4, 1fr);
-}
+
+/* ── 6.6 Accesos rápidos del dashboard ─────────────────────── */
+
+/**
+ * .quick
+ * Botón de acceso rápido en el dashboard que lleva
+ * directamente a una acción frecuente (ej: "Nuevo cultivo").
+ */
 .quick {
   border: 1px solid var(--border);
   background: #fff;
@@ -391,25 +777,36 @@ a {
   padding: 16px;
   text-align: left;
 }
+
 .quick:hover {
-  border-color: #b9d29e;
+  border-color: #b9d29e; /* borde verde al hover */
   background: #fbfdf8;
 }
+
 .quick b {
   display: block;
   margin: 8px 0 3px;
 }
+
 .quick span {
   font-size: 11px;
   color: var(--muted);
 }
-.module-grid {
-  grid-template-columns: repeat(3, 1fr);
-}
+
+/* ── 6.7 Cards de módulos ───────────────────────────────────── */
+
+/**
+ * .module-card
+ * Card que representa cada módulo en la pantalla de inicio.
+ * Tiene un círculo decorativo en la esquina superior derecha
+ * generado con ::after.
+ */
 .module-card {
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* necesario para recortar el ::after */
 }
+
+/* Círculo decorativo de fondo en la esquina */
 .module-card::after {
   content: "";
   position: absolute;
@@ -420,6 +817,11 @@ a {
   background: #e8f1db;
   border-radius: 50%;
 }
+
+/**
+ * .module-icon
+ * Ícono cuadrado redondeado del módulo dentro de la card.
+ */
 .module-icon {
   width: 48px;
   height: 48px;
@@ -429,49 +831,83 @@ a {
   place-items: center;
   font-size: 22px;
 }
+
 .module-card h3 {
   margin: 14px 0 6px;
 }
 .module-card p {
   font-size: 12px;
   color: var(--muted);
-  min-height: 38px;
+  min-height: 38px; /* altura mínima para alinear cards de diferente largo */
 }
+
+/**
+ * .feature-list
+ * Lista de características del módulo con checkmarks verdes.
+ */
 .feature-list {
   list-style: none;
   margin-top: 13px;
   display: grid;
   gap: 7px;
 }
+
 .feature-list li {
   font-size: 12px;
   color: #40584a;
 }
+
+/* Checkmark verde antes de cada ítem de la lista */
 .feature-list li::before {
   content: "✓";
   color: var(--primary);
   font-weight: 900;
   margin-right: 7px;
 }
+
 .module-card .btn {
   margin-top: 15px;
 }
-.toolbar {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
+
+/* ── 6.8 Contenedor de gráficas ─────────────────────────────── */
+
+/**
+ * .chart-box
+ * Contenedor con altura fija para las gráficas de Chart.js.
+ * Chart.js necesita un contenedor con altura definida para
+ * calcular el tamaño del canvas.
+ */
+.chart-box {
+  height: 280px;
 }
+
+/* ============================================================
+   7. FORMULARIOS
+   Estilos de campos de texto, selects y textareas.
+   ============================================================ */
+
+/* ── 7.1 Campo individual ───────────────────────────────────── */
+
+/**
+ * .field
+ * Contenedor de un campo de formulario: etiqueta + input.
+ * El display: flex + flex-direction: column apila la etiqueta
+ * encima del campo.
+ */
 .field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
+
+/* Etiqueta del campo — pequeña y en negrita */
 .field label {
   font-size: 11px;
   font-weight: 800;
   color: #496051;
 }
+
+/* Estilos base compartidos por input, select y textarea */
 .field input,
 .field select,
 .field textarea {
@@ -482,25 +918,79 @@ a {
   outline: none;
   color: var(--text);
 }
+
+/* Estado de foco: borde verde + sombra difusa */
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 143, 47, 0.1);
 }
+
+/* ── 7.2 Barra de herramientas ─────────────────────────────── */
+
+/**
+ * .toolbar
+ * Fila de controles por encima de una tabla (búsqueda, filtros,
+ * selects). Se envuelve en pantallas pequeñas.
+ */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+/**
+ * .search
+ * Variante de .field para el input de búsqueda de tablas.
+ * Ancho mínimo para que sea usable.
+ */
 .search {
   min-width: 230px;
 }
+
+/**
+ * .form-actions
+ * Fila de botones al final de un formulario (Cancelar / Guardar).
+ * Alineados a la derecha.
+ */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ============================================================
+   8. TABLAS DE DATOS
+   Estilos de las tablas de registros (cultivos, animales, etc.)
+   ============================================================ */
+
+/**
+ * .table-wrap
+ * Contenedor con scroll horizontal y borde redondeado.
+ * El overflow: auto permite que la tabla se desplace
+ * horizontalmente en pantallas pequeñas sin romper el layout.
+ */
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 15px;
 }
+
+/**
+ * .table
+ * Tabla de datos. min-width asegura que tenga espacio mínimo
+ * antes de que aparezca el scroll horizontal.
+ */
 .table {
   width: 100%;
   border-collapse: collapse;
   min-width: 720px;
 }
+
+/* Celdas de encabezado y datos */
 .table th,
 .table td {
   padding: 12px 14px;
@@ -508,6 +998,8 @@ a {
   text-align: left;
   font-size: 12px;
 }
+
+/* Encabezados: fondo gris claro y texto en mayúsculas pequeñas */
 .table th {
   background: #f4f7ef;
   color: #52685a;
@@ -515,9 +1007,20 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* Quitar el borde inferior de la última fila */
 .table tr:last-child td {
   border-bottom: 0;
 }
+
+/**
+ * Clases de estado para celdas de tablas (.status).
+ * Se usan para mostrar el estado de cultivos, animales, etc.
+ *   .ok     → verde  (activo, completado, en buen estado)
+ *   .warn   → amarillo (advertencia, próximo a vencer)
+ *   .danger → rojo   (crítico, atrasado, stock bajo)
+ *   .info   → azul   (informativo, pendiente)
+ */
 .status {
   display: inline-flex;
   border-radius: 99px;
@@ -525,6 +1028,7 @@ a {
   font-size: 10px;
   font-weight: 800;
 }
+
 .ok {
   background: #e1f0dd;
   color: #28723c;
@@ -541,6 +1045,12 @@ a {
   background: #e0eef8;
   color: #2e6d9b;
 }
+
+/**
+ * .pagination
+ * Barra inferior de la tabla con el conteo de registros
+ * y los botones de paginación.
+ */
 .pagination {
   display: flex;
   justify-content: space-between;
@@ -549,42 +1059,64 @@ a {
   font-size: 11px;
   color: var(--muted);
 }
+
+/**
+ * .pager
+ * Grupo de botones numerados de paginación.
+ * El botón activo tiene fondo verde.
+ */
 .pager {
   display: flex;
   gap: 5px;
 }
+
 .pager button {
   border: 1px solid var(--border);
   background: #fff;
   border-radius: 8px;
   padding: 6px 9px;
 }
+
 .pager button.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
 }
-.form-grid {
-  grid-template-columns: repeat(2, 1fr);
-}
-.form-grid .full {
-  grid-column: 1/-1;
-}
+
+/* ============================================================
+   9. MODALES
+   Ventanas emergentes para formularios de creación/edición.
+   ============================================================ */
+
+/**
+ * .modal
+ * Overlay oscuro que cubre toda la pantalla.
+ * display: none por defecto. Se muestra con la clase .show.
+ * El clic en el overlay llama a closeModals() en app.js.
+ */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(10, 30, 18, 0.48);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 30, 18, 0.48); /* fondo oscuro semitransparente */
+  backdrop-filter: blur(4px); /* difumina el contenido de atrás */
   display: none;
   place-items: center;
-  z-index: 80;
+  z-index: 80; /* encima del sidebar (30) y topbar (20) */
   padding: 20px;
 }
+
 .modal.show {
-  display: grid;
+  display: grid; /* cambiar a grid activa el place-items: center */
 }
+
+/**
+ * .modal-box
+ * Contenedor del contenido del modal (el "cuadro blanco").
+ * max-height + overflow: auto permite scroll interno si el
+ * formulario es muy largo.
+ */
 .modal-box {
-  width: min(760px, 100%);
+  width: min(760px, 100%); /* máximo 760px, 100% en pantallas pequeñas */
   max-height: 90vh;
   overflow: auto;
   background: #fff;
@@ -592,12 +1124,22 @@ a {
   padding: 24px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
 }
+
+/**
+ * .modal-head
+ * Cabecera del modal: título a la izquierda, botón X a la derecha.
+ */
 .modal-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
 }
+
+/**
+ * .close
+ * Botón X para cerrar el modal manualmente.
+ */
 .close {
   border: 0;
   background: #eef3e9;
@@ -605,21 +1147,33 @@ a {
   height: 34px;
   border-radius: 10px;
 }
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
+
+/* ============================================================
+  10. AUTENTICACIÓN (Login y Registro)
+   Pantalla de inicio de sesión y registro de cuenta.
+   Se superpone a toda la app con z-index: 100.
+   ============================================================ */
+
+/**
+ * .login
+ * Pantalla completa de autenticación con gradiente verde oscuro.
+ * Es el primer elemento que ve el usuario al abrir la app.
+ * Se oculta cuando el usuario inicia sesión (.hidden en app.js).
+ */
 .login {
   position: fixed;
   inset: 0;
   background: linear-gradient(135deg, #123d2b, #315e38);
-  z-index: 100;
+  z-index: 100; /* encima de todo, incluyendo el sidebar */
   display: grid;
   place-items: center;
   padding: 20px;
 }
+
+/**
+ * .login-box
+ * Tarjeta blanca centrada que contiene el formulario de login.
+ */
 .login-box {
   width: min(430px, 100%);
   background: #fff;
@@ -627,13 +1181,20 @@ a {
   padding: 32px;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
 }
+
+/**
+ * .login-brand
+ * Sección superior del login box con el logo y nombre de la app.
+ */
 .login-brand {
   text-align: center;
   margin-bottom: 25px;
 }
+
 .login-brand .brand-mark {
-  margin: auto;
+  margin: auto; /* centrar el logo horizontalmente */
 }
+
 .login-brand h1 {
   margin: 10px 0 3px;
 }
@@ -641,18 +1202,29 @@ a {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* Campos dentro del login con espacio inferior entre ellos */
 .login .field {
   margin-bottom: 14px;
 }
+
+/**
+ * .login-note
+ * Texto legal pequeño al pie del formulario de login
+ * (ej: "Al iniciar sesión aceptas los términos").
+ */
 .login-note {
   font-size: 10px;
   color: var(--muted);
   text-align: center;
   margin-top: 13px;
 }
-.hidden {
-  display: none !important;
-}
+
+/**
+ * .login-divider
+ * Separador con texto "O" entre el formulario y el botón de Google.
+ * Crea las líneas grises con los pseudo-elementos ::before y ::after.
+ */
 .login-divider {
   display: flex;
   align-items: center;
@@ -663,6 +1235,7 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
 .login-divider::before,
 .login-divider::after {
   content: "";
@@ -670,27 +1243,52 @@ a {
   height: 1px;
   background: #e2e2e2;
 }
+
+/**
+ * .google-btn-slot
+ * Contenedor del botón de "Iniciar sesión con Google".
+ * El min-height evita saltos de layout mientras carga.
+ */
 .google-btn-slot {
   display: flex;
   justify-content: center;
   min-height: 40px;
 }
+
+/**
+ * .google-btn / .google-fallback-btn
+ * Botón de inicio de sesión con Google.
+ * Estilo estándar de Google: borde gris, ítem y texto centrado.
+ */
 .google-btn,
 .google-fallback-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border: 1px solid #dadce0;
+  border: 1px solid #dadce0; /* borde estándar de Google */
   width: 100%;
   margin-top: 4px;
 }
+
+/**
+ * .login-switch
+ * Texto con enlace para cambiar entre Login y Registro
+ * (ej: "¿No tienes cuenta? Regístrate").
+ */
 .login-switch {
   text-align: center;
   font-size: 12px;
   color: var(--muted);
   margin-top: 12px;
 }
+
+/**
+ * .link-btn
+ * Botón con apariencia de enlace de texto.
+ * Se usa para acciones secundarias como "Regístrate" o
+ * "¿Olvidaste tu contraseña?".
+ */
 .link-btn {
   background: none;
   border: none;
@@ -701,127 +1299,234 @@ a {
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* ============================================================
+  11. TOAST (notificación flotante)
+   Mensaje emergente temporal en la esquina inferior derecha.
+   Aparece con la clase .show y desaparece automáticamente.
+   ============================================================ */
+
+/**
+ * .toast
+ * Estado base: invisible y desplazado hacia abajo.
+ * La transición suaviza la aparición y desaparición.
+ */
 .toast {
   position: fixed;
   right: 22px;
   bottom: 22px;
-  background: #123d2b;
+  background: #123d2b; /* verde muy oscuro, buen contraste */
   color: #fff;
   padding: 13px 17px;
   border-radius: 13px;
   box-shadow: var(--shadow);
-  z-index: 120;
-  transform: translateY(20px);
+  z-index: 120; /* encima de todo, incluyendo el login */
+  transform: translateY(20px); /* desplazado hacia abajo */
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none; /* no interactúa con el mouse cuando está oculto */
   transition: 0.25s;
 }
+
+/**
+ * .toast.show
+ * Estado visible: posición original + completamente opaco.
+ * Se añade/quita con showToast() en app.js.
+ */
 .toast.show {
   transform: none;
   opacity: 1;
 }
+
+/* ============================================================
+  12. UTILIDADES
+   Clases de uso general que no pertenecen a un componente
+   específico.
+   ============================================================ */
+
+/**
+ * .hidden
+ * Oculta cualquier elemento de forma forzada.
+ * !important para sobrescribir cualquier otro display.
+ * Se usa principalmente para alternar entre login/registro/app.
+ */
+.hidden {
+  display: none !important;
+}
+
+/**
+ * .empty
+ * Mensaje centrado para tablas o listas sin datos.
+ */
 .empty {
   padding: 35px;
   text-align: center;
   color: var(--muted);
 }
+
+/* ============================================================
+  13. RESPONSIVE
+   Breakpoints para adaptar el layout a diferentes tamaños.
+   ============================================================ */
+
+/* ── 13.1 ≤ 1100px — Sidebar colapsado ─────────────────────── */
+
+/**
+ * En tablets y pantallas medianas, el sidebar se contrae a 80px
+ * mostrando solo los íconos (el texto de los items se oculta).
+ */
 @media (max-width: 1100px) {
   .app {
     grid-template-columns: 80px 1fr;
   }
+
   .sidebar {
     width: 80px;
     padding: 16px 10px;
   }
+
+  /* El logo y texto de la marca se centran */
   .brand {
     justify-content: center;
     border: 0;
   }
-  .brand > div:last-child,
-  .nav-title,
-  .nav-item span:not(.ico),
+
+  /* Ocultar textos que no caben en el sidebar colapsado */
+  .brand > div:last-child,  /* nombre y subtítulo de la marca */
+  .nav-title,               /* títulos de sección del menú */
+  .nav-item span:not(.ico), /* texto de los botones del menú */
   .sidebar-footer {
+    /* footer del sidebar */
     display: none;
   }
+
+  /* Centrar los íconos al colapsar el sidebar */
   .nav-item {
     justify-content: center;
   }
+
   .main {
     grid-column: 2;
   }
+
+  /* Reducir a 2 columnas en grids que eran de 3 */
   .module-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* Reducir a 2 columnas las métricas KPI */
   .kpis {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── 13.2 ≤ 760px — Móvil, sidebar oculto ──────────────────── */
+
+/**
+ * En móviles el sidebar se oculta completamente fuera de pantalla
+ * y se abre/cierra con el botón de hamburguesa (toggleSidebar).
+ */
 @media (max-width: 760px) {
+  /* La app ya no usa grid, pasa a bloque */
   .app {
     display: block;
   }
+
+  /* Sidebar oculto por defecto, se desliza al agregar .open */
   .sidebar {
     transform: translateX(-100%);
     transition: 0.25s;
     width: 260px;
   }
+
   .sidebar.open {
-    transform: none;
+    transform: none; /* vuelve a su posición original */
   }
+
+  /* Restaurar los textos que se ocultaron en 1100px */
   .brand > div:last-child,
   .nav-title,
   .nav-item span:not(.ico),
   .sidebar-footer {
     display: block;
   }
+
   .nav-item {
     justify-content: flex-start;
   }
+
   .main {
     margin: 0;
   }
+
+  /* Mostrar el botón hamburguesa */
   .mobile-menu {
     display: block;
   }
+
   .topbar {
     padding: 0 15px;
   }
+
+  /* Ocultar nombre/rol del usuario en la topbar para ahorrar espacio */
   .user > div:last-child {
     display: none;
   }
+
   .content {
     padding: 20px 15px;
   }
+
+  /* Todos los grids pasan a una sola columna en móvil */
   .page-head {
     align-items: flex-start;
     flex-direction: column;
   }
+
   .dashboard-grid,
   .module-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
+
+  /* KPIs en 2 columnas (no caben 4 en móvil) */
   .kpis {
     grid-template-columns: 1fr 1fr;
   }
+
+  /* Accesos rápidos en 2 columnas */
   .quick-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  /* Ocultar primer icon-btn (se ve muy apretado en móvil) */
   .top-actions .icon-btn:nth-child(1) {
     display: none;
   }
+
+  /* Búsqueda ocupa todo el ancho disponible */
   .search {
     min-width: 100%;
   }
 }
+
+/* ── 13.3 ≤ 450px — Móvil pequeño ──────────────────────────── */
+
+/**
+ * En teléfonos muy pequeños, los KPIs y accesos rápidos
+ * pasan a una sola columna.
+ */
 @media (max-width: 450px) {
   .kpis,
   .quick-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Reducir tamaño del título de página */
   .page-head h1 {
     font-size: 30px;
   }
+
+  /* Botones de acción ocupan todo el ancho */
   .actions,
   .actions .btn {
     width: 100%;

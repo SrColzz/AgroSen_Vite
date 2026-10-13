@@ -1,20 +1,20 @@
 <!doctype html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta
+      content="AgroNext - Sistema Integral de Gestión Agropecuaria"
       name="description"
-      content="AgroSen - Sistema Integral de Gestión Agropecuaria"
     />
-    <title>AgroSen | Sistema Integral de Gestión Agropecuaria</title>
+    <title>AgroNext | Sistema Integral de Gestión Agropecuaria</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/src/css/style.css" />
-    <script src="/src/js/app.js" defer></script>
+    <link href="/src/css/style.css" rel="stylesheet" />
+    <script defer="" src="/src/js/app.js"></script>
   </head>
   <body>
     <!-- Login Screen -->
-    <div id="login" class="login">
+    <div class="login" id="login">
       <div class="login-box">
         <div class="login-brand">
           <div class="brand-mark">🌱</div>
@@ -22,48 +22,46 @@
           <p>Sistema Integral de Gestión Agropecuaria</p>
         </div>
         <div class="field">
-          <label>Usuario</label
-          ><input id="loginUser" value="admin" autocomplete="username" />
+          <label>Usuario</label><input autocomplete="username" id="loginUser" />
         </div>
         <div class="field">
           <label>Contraseña</label
           ><input
+            autocomplete="current-password"
             id="loginPass"
             type="password"
-            value="AgroSen123"
-            autocomplete="current-password"
           />
         </div>
         <button
           class="btn btn-primary"
-          style="width: 100%; margin-top: 8px"
           onclick="login()"
+          style="width: 100%; margin-top: 8px"
         >
           🔐 Iniciar sesión
         </button>
         <div class="login-divider">o</div>
         <button
-          type="button"
           class="btn btn-white google-btn"
           onclick="signInWithGoogle()"
+          type="button"
         >
-          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <svg aria-hidden="true" height="18" viewbox="0 0 48 48" width="18">
             <path
-              fill="#FFC107"
               d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"
-            />
+              fill="#FFC107"
+            ></path>
             <path
-              fill="#FF3D00"
               d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.7 0-14.3 4.4-17.7 10.7z"
-            />
+              fill="#FF3D00"
+            ></path>
             <path
-              fill="#4CAF50"
               d="M24 44c5.2 0 9.9-1.8 13.5-4.9l-6.2-5.3c-2 1.4-4.6 2.2-7.3 2.2-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.6 39.6 16.3 44 24 44z"
-            />
+              fill="#4CAF50"
+            ></path>
             <path
-              fill="#1976D2"
               d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.3C40.8 36.3 44 30.8 44 24c0-1.2-.1-2.4-.4-3.5z"
-            />
+              fill="#1976D2"
+            ></path>
           </svg>
           Iniciar sesión con Google
         </button>
@@ -76,14 +74,10 @@
           ¿No tienes cuenta?
           <button class="link-btn" onclick="showRegister()">Regístrate</button>
         </div>
-        <p class="login-note">
-          Prototipo frontend. La autenticación real, bcrypt, tokens, correo y
-          control de sesiones requieren backend.
-        </p>
+        <p class="login-note"></p>
       </div>
     </div>
-
-    <div id="register" class="login hidden">
+    <div class="login hidden" id="register">
       <div class="login-box">
         <div class="login-brand">
           <div class="brand-mark">🌱</div>
@@ -93,58 +87,58 @@
         <div class="field">
           <label>Nombre completo</label
           ><input
-            id="regName"
             autocomplete="name"
+            id="regName"
             placeholder="Ej: Ana Torres"
           />
         </div>
         <div class="field">
           <label>Correo electrónico</label
           ><input
-            id="regEmail"
-            type="email"
             autocomplete="email"
+            id="regEmail"
             placeholder="correo@ejemplo.com"
+            type="email"
           />
         </div>
         <div class="field">
           <label>Contraseña</label
-          ><input id="regPass" type="password" autocomplete="new-password" />
+          ><input autocomplete="new-password" id="regPass" type="password" />
         </div>
         <div class="field">
           <label>Confirmar contraseña</label
-          ><input id="regPass2" type="password" autocomplete="new-password" />
+          ><input autocomplete="new-password" id="regPass2" type="password" />
         </div>
         <button
           class="btn btn-primary"
-          style="width: 100%; margin-top: 8px"
           onclick="register()"
+          style="width: 100%; margin-top: 8px"
         >
           📝 Crear cuenta
         </button>
         <div class="login-divider">o</div>
         <button
-          type="button"
           class="btn btn-white google-btn"
           onclick="signInWithGoogle()"
+          type="button"
         >
-          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <svg aria-hidden="true" height="18" viewbox="0 0 48 48" width="18">
             <path
-              fill="#FFC107"
               d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"
-            />
+              fill="#FFC107"
+            ></path>
             <path
-              fill="#FF3D00"
               d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.9 1.1 8.1 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.7 0-14.3 4.4-17.7 10.7z"
-            />
+              fill="#FF3D00"
+            ></path>
             <path
-              fill="#4CAF50"
               d="M24 44c5.2 0 9.9-1.8 13.5-4.9l-6.2-5.3c-2 1.4-4.6 2.2-7.3 2.2-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.6 39.6 16.3 44 24 44z"
-            />
+              fill="#4CAF50"
+            ></path>
             <path
-              fill="#1976D2"
               d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.3C40.8 36.3 44 30.8 44 24c0-1.2-.1-2.4-.4-3.5z"
-            />
+              fill="#1976D2"
+            ></path>
           </svg>
           Registrarse con Google
         </button>
@@ -154,12 +148,9 @@
             Inicia sesión
           </button>
         </div>
-        <p class="login-note">
-          Prototipo frontend. El registro real de usuarios requiere backend.
-        </p>
+        <p class="login-note"></p>
       </div>
     </div>
-
     <div class="app" id="app">
       <aside class="sidebar" id="sidebar">
         <div class="brand">
@@ -210,7 +201,7 @@
           <span class="ico">↪</span><span>Cerrar sesión</span>
         </button>
         <div class="sidebar-footer">
-          Interfaz responsive · 320px+<br />AgroSen · SENA ADSO
+          Interfaz responsive · 320px+<br />AgroNext · SENA ADSO
         </div>
       </aside>
       <main class="main">
@@ -218,7 +209,7 @@
           <div style="display: flex; align-items: center; gap: 12px">
             <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
             <div class="crumb">
-              AgroSen / <strong id="crumb">Dashboard</strong>
+              AgroNext / <strong id="crumb">Dashboard</strong>
             </div>
           </div>
           <div class="top-actions">
@@ -226,13 +217,16 @@
               class="icon-btn"
               onclick="showToast('3 notificaciones pendientes')"
             >
-              🔔<span class="badge">3</span></button
+              🔔<span class="badge" id="badge-notif">0</span></button
             ><button class="icon-btn" onclick="openModal('modalAlert')">
               ＋
             </button>
             <div class="user">
-              <div class="avatar">AE</div>
-              <div><b>Administrador</b><small>Acceso completo</small></div>
+              <div class="avatar" id="topbar-avatar">?</div>
+              <div>
+                <b id="topbar-nombre">Usuario</b
+                ><small id="topbar-rol">Cargando...</small>
+              </div>
             </div>
           </div>
         </header>
@@ -241,10 +235,10 @@
             <div class="page-head">
               <div>
                 <span class="eyebrow">Panel ejecutivo · RF-070</span>
-                <h1>Buenos días, administrador 👋</h1>
+                <h1>Bienvenido 👋</h1>
                 <p>
                   Resumen de cultivos, producción pecuaria, inventarios,
-                  finanzas y alertas de AgroSen.
+                  finanzas y alertas de AgroNext.
                 </p>
               </div>
               <div class="actions">
@@ -262,32 +256,32 @@
               <div class="card kpi">
                 <div>
                   <p>Cultivos activos</p>
-                  <h3>18</h3>
-                  <span class="trend">+3 este mes</span>
+                  <h3>—</h3>
+                  <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">🌾</div>
               </div>
               <div class="card kpi">
                 <div>
                   <p>Animales registrados</p>
-                  <h3>247</h3>
-                  <span class="trend">+12 nuevos</span>
+                  <h3>—</h3>
+                  <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">🐄</div>
               </div>
               <div class="card kpi">
                 <div>
                   <p>Valor inventario</p>
-                  <h3>$18,4M</h3>
-                  <span class="trend">Stock estable</span>
+                  <h3>—</h3>
+                  <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">📦</div>
               </div>
               <div class="card kpi">
                 <div>
                   <p>Balance del período</p>
-                  <h3>$7,2M</h3>
-                  <span class="trend">+8,4%</span>
+                  <h3>—</h3>
+                  <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">💰</div>
               </div>
@@ -329,27 +323,7 @@
                   </button>
                 </div>
                 <div class="alerts">
-                  <div class="alert">
-                    <div class="aicon">⚠️</div>
-                    <div>
-                      <strong>Stock bajo: Fertilizante NPK</strong>
-                      <p>Quedan 18 kg · mínimo configurado: 25 kg.</p>
-                    </div>
-                  </div>
-                  <div class="alert">
-                    <div class="aicon">💉</div>
-                    <div>
-                      <strong>Vacunación próxima</strong>
-                      <p>8 bovinos requieren aplicación en 7 días.</p>
-                    </div>
-                  </div>
-                  <div class="alert">
-                    <div class="aicon">⏰</div>
-                    <div>
-                      <strong>Cosecha programada</strong>
-                      <p>Lote L-03 · café · dentro de 12 días.</p>
-                    </div>
-                  </div>
+                  <p class="empty">Sin alertas activas.</p>
                 </div>
               </div>
             </div>
@@ -380,7 +354,6 @@
               </div>
             </div>
           </section>
-
           <section class="page" id="page-fincas">
             <div class="page-head">
               <div>
@@ -399,7 +372,7 @@
               <div class="card kpi">
                 <div>
                   <p>Fincas</p>
-                  <h3>4</h3>
+                  <h3>—</h3>
                   <span class="muted">Activas</span>
                 </div>
                 <div class="icon">🏡</div>
@@ -407,7 +380,7 @@
               <div class="card kpi">
                 <div>
                   <p>Lotes</p>
-                  <h3>23</h3>
+                  <h3>—</h3>
                   <span class="muted">Parcelas registradas</span>
                 </div>
                 <div class="icon">🗺️</div>
@@ -415,7 +388,7 @@
               <div class="card kpi">
                 <div>
                   <p>Área total</p>
-                  <h3>86,5 ha</h3>
+                  <h3>—</h3>
                   <span class="muted">Superficie administrada</span>
                 </div>
                 <div class="icon">📐</div>
@@ -423,7 +396,7 @@
               <div class="card kpi">
                 <div>
                   <p>Área utilizada</p>
-                  <h3>71%</h3>
+                  <h3>—</h3>
                   <span class="muted">Dentro del límite</span>
                 </div>
                 <div class="icon">📍</div>
@@ -462,52 +435,8 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td>La Esperanza</td>
-                      <td>Pereira · Risaralda</td>
-                      <td>28 ha</td>
-                      <td>Franco</td>
-                      <td>8</td>
-                      <td><span class="status ok">Activa</span></td>
-                      <td>
-                        <button
-                          class="btn btn-soft btn-sm"
-                          onclick="showToast('Edición de finca abierta')"
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>El Porvenir</td>
-                      <td>Santa Rosa · Risaralda</td>
-                      <td>19,5 ha</td>
-                      <td>Arcilloso</td>
-                      <td>5</td>
-                      <td><span class="status ok">Activa</span></td>
-                      <td>
-                        <button class="btn btn-soft btn-sm">Editar</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>San Miguel</td>
-                      <td>Dosquebradas · Risaralda</td>
-                      <td>14 ha</td>
-                      <td>Arenoso</td>
-                      <td>4</td>
-                      <td><span class="status warn">Revisión</span></td>
-                      <td>
-                        <button class="btn btn-soft btn-sm">Editar</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>El Recuerdo</td>
-                      <td>La Virginia · Risaralda</td>
-                      <td>25 ha</td>
-                      <td>Franco-arcilloso</td>
-                      <td>6</td>
-                      <td><span class="status ok">Activa</span></td>
-                      <td>
-                        <button class="btn btn-soft btn-sm">Editar</button>
+                      <td class="empty" colspan="7">
+                        Sin datos. Conecta la base de datos para ver registros.
                       </td>
                     </tr>
                   </tbody>
@@ -515,7 +444,6 @@
               </div>
             </div>
           </section>
-
           <section class="page" id="page-agricola">
             <div class="page-head">
               <div>
@@ -602,35 +530,15 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Café</td>
-                      <td>Caturra</td>
-                      <td>L-03</td>
-                      <td>10/01/2026</td>
-                      <td>21/09/2026</td>
-                      <td><span class="status ok">En crecimiento</span></td>
-                    </tr>
-                    <tr>
-                      <td>Plátano</td>
-                      <td>Dominico</td>
-                      <td>L-05</td>
-                      <td>22/02/2026</td>
-                      <td>18/10/2026</td>
-                      <td><span class="status info">Producción</span></td>
-                    </tr>
-                    <tr>
-                      <td>Aguacate</td>
-                      <td>Hass</td>
-                      <td>L-07</td>
-                      <td>05/03/2026</td>
-                      <td>12/12/2026</td>
-                      <td><span class="status ok">En crecimiento</span></td>
+                      <td class="empty" colspan="6">
+                        Sin datos. Conecta la base de datos para ver registros.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-pecuario">
             <div class="page-head">
               <div>
@@ -711,38 +619,15 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td>BV-001</td>
-                      <td>Bovino</td>
-                      <td>Holstein</td>
-                      <td>Hembra</td>
-                      <td>12/04/2023</td>
-                      <td>TRZ-AG-0001</td>
-                      <td><span class="status ok">Activo</span></td>
-                    </tr>
-                    <tr>
-                      <td>BV-002</td>
-                      <td>Bovino</td>
-                      <td>Cebú</td>
-                      <td>Macho</td>
-                      <td>03/08/2022</td>
-                      <td>TRZ-AG-0002</td>
-                      <td><span class="status ok">Activo</span></td>
-                    </tr>
-                    <tr>
-                      <td>AV-019</td>
-                      <td>Ave</td>
-                      <td>Isa Brown</td>
-                      <td>Hembra</td>
-                      <td>15/02/2025</td>
-                      <td>TRZ-AG-0019</td>
-                      <td><span class="status warn">Control</span></td>
+                      <td class="empty" colspan="7">
+                        Sin datos. Conecta la base de datos para ver registros.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-inventario">
             <div class="page-head">
               <div>
@@ -764,7 +649,7 @@
               <div class="card kpi">
                 <div>
                   <p>Productos</p>
-                  <h3>128</h3>
+                  <h3>—</h3>
                   <span class="muted">4 categorías</span>
                 </div>
                 <div class="icon">📦</div>
@@ -772,7 +657,7 @@
               <div class="card kpi">
                 <div>
                   <p>Stock bajo</p>
-                  <h3>7</h3>
+                  <h3>—</h3>
                   <span class="status warn">Revisar</span>
                 </div>
                 <div class="icon">⚠️</div>
@@ -780,7 +665,7 @@
               <div class="card kpi">
                 <div>
                   <p>Próximos a vencer</p>
-                  <h3>4</h3>
+                  <h3>—</h3>
                   <span class="muted">≤ 30 días</span>
                 </div>
                 <div class="icon">📅</div>
@@ -788,7 +673,7 @@
               <div class="card kpi">
                 <div>
                   <p>Valor total</p>
-                  <h3>$18,4M</h3>
+                  <h3>—</h3>
                   <span class="muted">Precio promedio ponderado</span>
                 </div>
                 <div class="icon">💵</div>
@@ -798,8 +683,8 @@
               <div class="toolbar">
                 <input
                   class="search"
-                  placeholder="🔎 Buscar producto..."
                   oninput="filterTable('stockTable', this.value)"
+                  placeholder="🔎 Buscar producto..."
                 /><select>
                   <option>Todas las categorías</option>
                   <option>Agrícolas</option>
@@ -832,38 +717,15 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Fertilizante NPK</td>
-                      <td>Agrícola</td>
-                      <td>18 kg</td>
-                      <td>25 kg</td>
-                      <td>30/11/2026</td>
-                      <td>$234.000</td>
-                      <td><span class="status warn">Stock bajo</span></td>
-                    </tr>
-                    <tr>
-                      <td>Desparasitante bovino</td>
-                      <td>Pecuario</td>
-                      <td>36 und</td>
-                      <td>10 und</td>
-                      <td>20/09/2026</td>
-                      <td>$480.000</td>
-                      <td><span class="status danger">Vence pronto</span></td>
-                    </tr>
-                    <tr>
-                      <td>Guantes de trabajo</td>
-                      <td>Herramientas</td>
-                      <td>92 pares</td>
-                      <td>30 pares</td>
-                      <td>—</td>
-                      <td>$1.104.000</td>
-                      <td><span class="status ok">Normal</span></td>
+                      <td class="empty" colspan="7">
+                        Sin datos. Conecta la base de datos para ver registros.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-financiero">
             <div class="page-head">
               <div>
@@ -889,7 +751,7 @@
               <div class="card kpi">
                 <div>
                   <p>Ingresos</p>
-                  <h3>$24,8M</h3>
+                  <h3>—</h3>
                   <span class="trend">Este período</span>
                 </div>
                 <div class="icon">↗</div>
@@ -897,7 +759,7 @@
               <div class="card kpi">
                 <div>
                   <p>Egresos</p>
-                  <h3>$17,6M</h3>
+                  <h3>—</h3>
                   <span class="muted">Incluye costos asociados</span>
                 </div>
                 <div class="icon">↘</div>
@@ -905,15 +767,15 @@
               <div class="card kpi">
                 <div>
                   <p>Rentabilidad</p>
-                  <h3>29%</h3>
-                  <span class="trend">+4,2%</span>
+                  <h3>—</h3>
+                  <span class="trend"></span>
                 </div>
                 <div class="icon">📈</div>
               </div>
               <div class="card kpi">
                 <div>
                   <p>Cuentas pendientes</p>
-                  <h3>$3,1M</h3>
+                  <h3>—</h3>
                   <span class="status warn">Por cobrar/pagar</span>
                 </div>
                 <div class="icon">🧾</div>
@@ -933,32 +795,14 @@
                   <span>RF-053</span>
                 </div>
                 <div class="alerts">
-                  <div class="alert">
-                    <div class="aicon">☕</div>
-                    <div>
-                      <strong>Café · 34%</strong>
-                      <p>Actividad con mayor margen.</p>
-                    </div>
-                  </div>
-                  <div class="alert">
-                    <div class="aicon">🥑</div>
-                    <div>
-                      <strong>Aguacate · 27%</strong>
-                      <p>Rentabilidad estable.</p>
-                    </div>
-                  </div>
-                  <div class="alert">
-                    <div class="aicon">🐄</div>
-                    <div>
-                      <strong>Ganadería · 22%</strong>
-                      <p>Punto de equilibrio en seguimiento.</p>
-                    </div>
-                  </div>
+                  <p class="empty">
+                    Sin datos. Registra ingresos y gastos para ver la
+                    rentabilidad.
+                  </p>
                 </div>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-rrhh">
             <div class="page-head">
               <div>
@@ -1019,7 +863,7 @@
             <div class="card" style="margin-top: 18px">
               <div class="card-head">
                 <h2>Empleados</h2>
-                <span>Asistencia del día: 18/20</span>
+                <span id="rrhh-asistencia">Asistencia del día: —</span>
               </div>
               <div class="table-wrap">
                 <table class="table">
@@ -1035,35 +879,15 @@
                   </thead>
                   <tbody>
                     <tr>
-                      <td>María López</td>
-                      <td>1.088.***</td>
-                      <td>Operaria agrícola</td>
-                      <td>$1.650.000</td>
-                      <td>15/02/2026</td>
-                      <td><span class="status ok">Presente</span></td>
-                    </tr>
-                    <tr>
-                      <td>Carlos Ramírez</td>
-                      <td>1.091.***</td>
-                      <td>Encargado finca</td>
-                      <td>$2.200.000</td>
-                      <td>08/01/2026</td>
-                      <td><span class="status ok">Presente</span></td>
-                    </tr>
-                    <tr>
-                      <td>Ana Torres</td>
-                      <td>1.099.***</td>
-                      <td>Administración</td>
-                      <td>$2.450.000</td>
-                      <td>03/03/2026</td>
-                      <td><span class="status warn">Pendiente</span></td>
+                      <td class="empty" colspan="6">
+                        Sin datos. Conecta la base de datos para ver registros.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-reportes">
             <div class="page-head">
               <div>
@@ -1175,15 +999,14 @@
                 </div>
                 <button
                   class="btn btn-primary"
-                  style="align-self: end"
                   onclick="showToast('Filtros aplicados al reporte')"
+                  style="align-self: end"
                 >
                   Aplicar filtros
                 </button>
               </div>
             </div>
           </section>
-
           <section class="page" id="page-alertas">
             <div class="page-head">
               <div>
@@ -1204,7 +1027,7 @@
                 <h3>Stock bajo</h3>
                 <p>Productos por debajo del mínimo configurado.</p>
                 <ul class="feature-list">
-                  <li>7 productos requieren revisión</li>
+                  <li>Sin alertas activas</li>
                   <li>Umbrales configurables</li>
                 </ul>
               </div>
@@ -1213,7 +1036,7 @@
                 <h3>Sanitarias</h3>
                 <p>Vacunaciones y desparasitaciones próximas.</p>
                 <ul class="feature-list">
-                  <li>8 aplicaciones próximas</li>
+                  <li>Sin alertas activas</li>
                   <li>Recordatorios programados</li>
                 </ul>
               </div>
@@ -1233,37 +1056,13 @@
                 <span>Últimos eventos</span>
               </div>
               <div class="alerts">
-                <div class="alert">
-                  <div class="aicon">⚠️</div>
-                  <div>
-                    <strong>Stock bajo · Fertilizante NPK</strong>
-                    <p>18 kg disponibles. Mínimo 25 kg. Generada hoy 08:10.</p>
-                  </div>
-                  <span class="status warn">Pendiente</span>
-                </div>
-                <div class="alert">
-                  <div class="aicon">💉</div>
-                  <div>
-                    <strong>Vacunación · Lote bovino</strong>
-                    <p>8 animales requieren vacunación antes del 16/09/2026.</p>
-                  </div>
-                  <span class="status info">Programada</span>
-                </div>
-                <div class="alert">
-                  <div class="aicon">🌾</div>
-                  <div>
-                    <strong>Actividad pendiente · L-03</strong>
-                    <p>Control de plagas programado para mañana.</p>
-                  </div>
-                  <span class="status danger">Urgente</span>
-                </div>
+                <p class="empty">Sin alertas activas en este momento.</p>
               </div>
             </div>
           </section>
         </div>
       </main>
     </div>
-
     <!-- Modales -->
     <div class="modal" id="modalFinca">
       <div class="modal-box">
@@ -1281,7 +1080,7 @@
           </div>
           <div class="field">
             <label>Área total (ha)</label
-            ><input type="number" min="0" oninput="validateArea(this)" />
+            ><input min="0" oninput="validateArea(this)" type="number" />
           </div>
           <div class="field">
             <label>Tipo de suelo</label
@@ -1295,8 +1094,8 @@
           <div class="field full">
             <label>Lotes / parcelas</label
             ><textarea
-              rows="3"
               placeholder="Ej. L-01: 4 ha · café | L-02: 3 ha · plátano"
+              rows="3"
             ></textarea
             ><small class="muted"
               >RF-014: la suma de áreas de lotes no debe superar el área
@@ -1334,10 +1133,8 @@
           </div>
           <div class="field">
             <label>Lote</label
-            ><select>
-              <option>L-03</option>
-              <option>L-05</option>
-              <option>L-07</option>
+            ><select id="selectLoteCultivo">
+              <option value="">Cargando lotes...</option>
             </select>
           </div>
           <div class="field">
@@ -1351,14 +1148,14 @@
             <label>Ciclo (días)</label
             ><input
               id="cycle"
+              oninput="calculateHarvest()"
               type="number"
               value="120"
-              oninput="calculateHarvest()"
             />
           </div>
           <div class="field full">
             <label>Fecha estimada de cosecha · RF-021</label
-            ><input id="harvest" readonly />
+            ><input id="harvest" readonly="" />
           </div>
         </div>
         <div class="form-actions">
@@ -1408,7 +1205,7 @@
           </div>
           <div class="field">
             <label>Código de trazabilidad</label
-            ><input value="TRZ-AG-AUTO" readonly />
+            ><input readonly="" value="TRZ-AG-AUTO" />
           </div>
         </div>
         <div class="form-actions">
@@ -1442,10 +1239,10 @@
             <label>Producto</label><input placeholder="Nombre del insumo" />
           </div>
           <div class="field">
-            <label>Cantidad</label><input type="number" min="0" />
+            <label>Cantidad</label><input min="0" type="number" />
           </div>
           <div class="field">
-            <label>Precio unitario</label><input type="number" min="0" />
+            <label>Precio unitario</label><input min="0" type="number" />
           </div>
           <div class="field">
             <label>Proveedor</label><input placeholder="Proveedor" />
@@ -1488,7 +1285,7 @@
             <label>Insumo utilizado</label><input placeholder="Opcional" />
           </div>
           <div class="field">
-            <label>Cantidad</label><input type="number" min="0" />
+            <label>Cantidad</label><input min="0" type="number" />
           </div>
           <div class="field full">
             <label>Observaciones</label><textarea rows="3"></textarea>
@@ -1518,7 +1315,7 @@
             <label>Cultivo / lote</label><input placeholder="Café · L-03" />
           </div>
           <div class="field">
-            <label>Cantidad</label><input type="number" min="0" />
+            <label>Cantidad</label><input min="0" type="number" />
           </div>
           <div class="field">
             <label>Calidad</label
@@ -1688,8 +1485,8 @@
           <div class="field full">
             <label>Campos</label
             ><textarea
-              rows="3"
               placeholder="Selecciona o escribe los campos a incluir..."
+              rows="3"
             ></textarea>
           </div>
         </div>
