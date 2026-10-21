@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="es">
   <head>
     <meta charset="utf-8" />
@@ -18,11 +19,17 @@
       <div class="login-box">
         <div class="login-brand">
           <div class="brand-mark">🌱</div>
-          <h1>Agro<span style="color: var(--primary)">Sen</span></h1>
+          <h1>Agro<span style="color: var(--primary)">Next</span></h1>
           <p>Sistema Integral de Gestión Agropecuaria</p>
         </div>
         <div class="field">
-          <label>Usuario</label><input autocomplete="username" id="loginUser" />
+          <label>Correo electrónico</label
+          ><input
+            autocomplete="email"
+            id="loginEmail"
+            placeholder="correo@ejemplo.com"
+            type="email"
+          />
         </div>
         <div class="field">
           <label>Contraseña</label
@@ -77,12 +84,11 @@
         <p class="login-note"></p>
       </div>
     </div>
-
-    <div id="register" class="login hidden">
+    <div class="login hidden" id="register">
       <div class="login-box">
         <div class="login-brand">
           <div class="brand-mark">🌱</div>
-          <h1>Agro<span style="color: var(--primary)">Sen</span></h1>
+          <h1>Agro<span style="color: var(--primary)">Next</span></h1>
           <p>Crear una cuenta nueva</p>
         </div>
         <div class="field">
@@ -214,10 +220,7 @@
             </div>
           </div>
           <div class="top-actions">
-            <button
-              class="icon-btn"
-              onclick="showToast('3 notificaciones pendientes')"
-            >
+            <button class="icon-btn" onclick="showPage('alertas')">
               🔔<span class="badge" id="badge-notif">0</span></button
             ><button class="icon-btn" onclick="openModal('modalAlert')">
               ＋
@@ -257,7 +260,7 @@
               <div class="card kpi">
                 <div>
                   <p>Cultivos activos</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-cultivos">—</h3>
                   <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">🌾</div>
@@ -265,7 +268,7 @@
               <div class="card kpi">
                 <div>
                   <p>Animales registrados</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-animales">—</h3>
                   <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">🐄</div>
@@ -273,7 +276,7 @@
               <div class="card kpi">
                 <div>
                   <p>Valor inventario</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-inventario">—</h3>
                   <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">📦</div>
@@ -281,7 +284,7 @@
               <div class="card kpi">
                 <div>
                   <p>Balance del período</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-balance">—</h3>
                   <span class="trend">Sin datos</span>
                 </div>
                 <div class="icon">💰</div>
@@ -373,7 +376,7 @@
               <div class="card kpi">
                 <div>
                   <p>Fincas</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-fincas">—</h3>
                   <span class="muted">Activas</span>
                 </div>
                 <div class="icon">🏡</div>
@@ -381,7 +384,7 @@
               <div class="card kpi">
                 <div>
                   <p>Lotes</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-lotes">—</h3>
                   <span class="muted">Parcelas registradas</span>
                 </div>
                 <div class="icon">🗺️</div>
@@ -389,7 +392,7 @@
               <div class="card kpi">
                 <div>
                   <p>Área total</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-area-total">—</h3>
                   <span class="muted">Superficie administrada</span>
                 </div>
                 <div class="icon">📐</div>
@@ -397,7 +400,7 @@
               <div class="card kpi">
                 <div>
                   <p>Área utilizada</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-area-usada">—</h3>
                   <span class="muted">Dentro del límite</span>
                 </div>
                 <div class="icon">📍</div>
@@ -518,7 +521,7 @@
                 <span>Historial y seguimiento</span>
               </div>
               <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="cultivosTable">
                   <thead>
                     <tr>
                       <th>Cultivo</th>
@@ -606,7 +609,7 @@
                 </button>
               </div>
               <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="animalesTable">
                   <thead>
                     <tr>
                       <th>Identificación</th>
@@ -650,7 +653,7 @@
               <div class="card kpi">
                 <div>
                   <p>Productos</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-productos">—</h3>
                   <span class="muted">4 categorías</span>
                 </div>
                 <div class="icon">📦</div>
@@ -658,7 +661,7 @@
               <div class="card kpi">
                 <div>
                   <p>Stock bajo</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-stock-bajo">—</h3>
                   <span class="status warn">Revisar</span>
                 </div>
                 <div class="icon">⚠️</div>
@@ -666,7 +669,7 @@
               <div class="card kpi">
                 <div>
                   <p>Próximos a vencer</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-por-vencer">—</h3>
                   <span class="muted">≤ 30 días</span>
                 </div>
                 <div class="icon">📅</div>
@@ -674,7 +677,7 @@
               <div class="card kpi">
                 <div>
                   <p>Valor total</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-valor-inv">—</h3>
                   <span class="muted">Precio promedio ponderado</span>
                 </div>
                 <div class="icon">💵</div>
@@ -752,7 +755,7 @@
               <div class="card kpi">
                 <div>
                   <p>Ingresos</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-ingresos">—</h3>
                   <span class="trend">Este período</span>
                 </div>
                 <div class="icon">↗</div>
@@ -760,7 +763,7 @@
               <div class="card kpi">
                 <div>
                   <p>Egresos</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-egresos">—</h3>
                   <span class="muted">Incluye costos asociados</span>
                 </div>
                 <div class="icon">↘</div>
@@ -768,7 +771,7 @@
               <div class="card kpi">
                 <div>
                   <p>Rentabilidad</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-rentabilidad">—</h3>
                   <span class="trend"></span>
                 </div>
                 <div class="icon">📈</div>
@@ -776,7 +779,7 @@
               <div class="card kpi">
                 <div>
                   <p>Cuentas pendientes</p>
-                  <h3>—</h3>
+                  <h3 id="kpi-cuentas">—</h3>
                   <span class="status warn">Por cobrar/pagar</span>
                 </div>
                 <div class="icon">🧾</div>
@@ -867,7 +870,7 @@
                 <span id="rrhh-asistencia">Asistencia del día: —</span>
               </div>
               <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="empleadosTable">
                   <thead>
                     <tr>
                       <th>Empleado</th>
@@ -984,10 +987,10 @@
             <div class="card" style="margin-top: 18px">
               <div class="toolbar">
                 <div class="field">
-                  <label>Desde</label><input type="date" value="2026-08-01" />
+                  <label>Desde</label><input id="reporte-desde" type="date" />
                 </div>
                 <div class="field">
-                  <label>Hasta</label><input type="date" value="2026-09-09" />
+                  <label>Hasta</label><input id="reporte-hasta" type="date" />
                 </div>
                 <div class="field">
                   <label>Tipo</label
@@ -1073,19 +1076,28 @@
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Nombre</label><input placeholder="Ej. La Esperanza" />
+            <label>Nombre</label
+            ><input id="finca-nombre" placeholder="Ej. La Esperanza" />
           </div>
           <div class="field">
             <label>Ubicación</label
-            ><input placeholder="Municipio / departamento" />
+            ><input
+              id="finca-ubicacion"
+              placeholder="Municipio / departamento"
+            />
           </div>
           <div class="field">
             <label>Área total (ha)</label
-            ><input min="0" oninput="validateArea(this)" type="number" />
+            ><input
+              id="finca-area"
+              min="0"
+              oninput="validateArea(this)"
+              type="number"
+            />
           </div>
           <div class="field">
             <label>Tipo de suelo</label
-            ><select>
+            ><select id="finca-suelo">
               <option>Franco</option>
               <option>Arcilloso</option>
               <option>Arenoso</option>
@@ -1095,6 +1107,7 @@
           <div class="field full">
             <label>Lotes / parcelas</label
             ><textarea
+              id="finca-lotes"
               placeholder="Ej. L-01: 4 ha · café | L-02: 3 ha · plátano"
               rows="3"
             ></textarea
@@ -1127,10 +1140,12 @@
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Tipo de cultivo</label><input placeholder="Ej. Café" />
+            <label>Tipo de cultivo</label
+            ><input id="cultivo-tipo" placeholder="Ej. Café" />
           </div>
           <div class="field">
-            <label>Variedad</label><input placeholder="Ej. Caturra" />
+            <label>Variedad</label
+            ><input id="cultivo-variedad" placeholder="Ej. Caturra" />
           </div>
           <div class="field">
             <label>Lote</label
@@ -1143,7 +1158,8 @@
             ><input placeholder="Kg / unidades" />
           </div>
           <div class="field">
-            <label>Fecha de siembra</label><input type="date" />
+            <label>Fecha de siembra</label
+            ><input id="cultivo-siembra" type="date" />
           </div>
           <div class="field">
             <label>Ciclo (días)</label
@@ -1181,7 +1197,7 @@
         <div class="grid form-grid">
           <div class="field">
             <label>Especie</label
-            ><select>
+            ><select id="animal-especie">
               <option>Bovino</option>
               <option>Porcino</option>
               <option>Ave</option>
@@ -1189,17 +1205,19 @@
             </select>
           </div>
           <div class="field">
-            <label>Raza</label><input placeholder="Ej. Holstein" />
+            <label>Raza</label
+            ><input id="animal-raza" placeholder="Ej. Holstein" />
           </div>
           <div class="field">
             <label>Sexo</label
-            ><select>
+            ><select id="animal-sexo">
               <option>Hembra</option>
               <option>Macho</option>
             </select>
           </div>
           <div class="field">
-            <label>Identificación</label><input placeholder="BV-001" />
+            <label>Identificación</label
+            ><input id="animal-id" placeholder="BV-001" />
           </div>
           <div class="field">
             <label>Fecha de nacimiento</label><input type="date" />
@@ -1231,25 +1249,29 @@
         <div class="grid form-grid">
           <div class="field">
             <label>Tipo</label
-            ><select>
+            ><select id="mov-tipo">
               <option>Ingreso / compra</option>
               <option>Salida / consumo</option>
             </select>
           </div>
           <div class="field">
-            <label>Producto</label><input placeholder="Nombre del insumo" />
+            <label>Producto</label
+            ><input id="mov-producto" placeholder="Nombre del insumo" />
           </div>
           <div class="field">
-            <label>Cantidad</label><input min="0" type="number" />
+            <label>Cantidad</label
+            ><input id="mov-cantidad" min="0" type="number" />
           </div>
           <div class="field">
-            <label>Precio unitario</label><input min="0" type="number" />
+            <label>Precio unitario</label
+            ><input id="mov-precio" min="0" type="number" />
           </div>
           <div class="field">
-            <label>Proveedor</label><input placeholder="Proveedor" />
+            <label>Proveedor</label
+            ><input id="mov-proveedor" placeholder="Proveedor" />
           </div>
           <div class="field">
-            <label>Vencimiento</label><input type="date" />
+            <label>Vencimiento</label><input id="mov-vencimiento" type="date" />
           </div>
         </div>
         <div class="form-actions">
@@ -1350,18 +1372,24 @@
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
-          <div class="field"><label>Concepto</label><input /></div>
+          <div class="field">
+            <label>Concepto</label><input id="gasto-concepto" />
+          </div>
           <div class="field">
             <label>Categoría</label
-            ><select>
+            ><select id="gasto-categoria">
               <option>Insumos</option>
               <option>Mano de obra</option>
               <option>Servicios</option>
               <option>Mantenimiento</option>
             </select>
           </div>
-          <div class="field"><label>Valor</label><input type="number" /></div>
-          <div class="field"><label>Fecha</label><input type="date" /></div>
+          <div class="field">
+            <label>Valor</label><input id="gasto-valor" type="number" />
+          </div>
+          <div class="field">
+            <label>Fecha</label><input id="gasto-fecha" type="date" />
+          </div>
           <div class="field full">
             <label>Asociar a</label
             ><select>
@@ -1395,19 +1423,26 @@
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Concepto</label><input placeholder="Venta de cosecha" />
+            <label>Concepto</label
+            ><input id="ing-concepto" placeholder="Venta de cosecha" />
           </div>
           <div class="field">
             <label>Tipo</label
-            ><select>
+            ><select id="ing-tipo">
               <option>Venta agrícola</option>
               <option>Venta pecuaria</option>
               <option>Otro</option>
             </select>
           </div>
-          <div class="field"><label>Valor</label><input type="number" /></div>
-          <div class="field"><label>Fecha</label><input type="date" /></div>
-          <div class="field full"><label>Cliente</label><input /></div>
+          <div class="field">
+            <label>Valor</label><input id="ing-valor" type="number" />
+          </div>
+          <div class="field">
+            <label>Fecha</label><input id="ing-fecha" type="date" />
+          </div>
+          <div class="field full">
+            <label>Cliente</label><input id="ing-cliente" />
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
@@ -1427,16 +1462,23 @@
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
-          <div class="field"><label>Nombres</label><input /></div>
-          <div class="field"><label>Identificación</label><input /></div>
-          <div class="field"><label>Cargo</label><input /></div>
-          <div class="field"><label>Salario</label><input type="number" /></div>
           <div class="field">
-            <label>Fecha de ingreso</label><input type="date" />
+            <label>Nombres</label><input id="emp-nombres" />
+          </div>
+          <div class="field">
+            <label>Identificación</label><input id="emp-identificacion" />
+          </div>
+          <div class="field"><label>Cargo</label><input id="emp-cargo" /></div>
+          <div class="field">
+            <label>Salario</label><input id="emp-salario" type="number" />
+          </div>
+          <div class="field">
+            <label>Fecha de ingreso</label
+            ><input id="emp-fecha-ingreso" type="date" />
           </div>
           <div class="field">
             <label>Tipo de contrato</label
-            ><select>
+            ><select id="emp-contrato">
               <option>Indefinido</option>
               <option>Fijo</option>
               <option>Obra o labor</option>
