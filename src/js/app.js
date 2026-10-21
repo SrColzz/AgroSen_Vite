@@ -1,11 +1,4 @@
-/* ============================================================
-   AgroNext — app.js  (versión limpia, lista para Supabase)
-   ─────────────────────────────────────────────────────────────
-   TODOS los datos hardcodeados fueron eliminados.
-   Las funciones de gráficas ahora reciben datos reales
-   como parámetro; mientras no haya conexión muestran
-   un estado vacío.
-   ============================================================ */
+import { supabase } from "./supabase.js";
 
 /* ============================================================
    1. ESTADO GLOBAL
@@ -17,16 +10,42 @@ let charts = {}; // instancias de Chart.js (evita duplicados)
    2. MÓDULO DE AUTENTICACIÓN
    ============================================================ */
 
-function login() {
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPass").value;
+
+  if (!email || !password) {
+    showToast("Ingresa tu correo y contraseña");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    showToast("Credenciales incorrectas");
+    return;
+  }
+
+  // Cargar perfil del usuario desde la tabla usuarios
+  const { data: perfil } = await supabase
+    .from("usuarios")
+    .select("nombre, rol")
+    .eq("id", data.user.id)
+    .single();
+
   document.getElementById("login").classList.add("hidden");
+  setTopbarUser(perfil);
   showToast("Sesión iniciada");
+  cargarDashboard(); // cargar datos reales
 }
 
-function logout() {
+async function logout() {
+  await supabase.auth.signOut();
   document.getElementById("register").classList.add("hidden");
   document.getElementById("login").classList.remove("hidden");
-
-  // Limpiar datos del topbar al cerrar sesión
   setTopbarUser(null);
   showToast("Sesión cerrada");
 }
@@ -60,7 +79,6 @@ function register() {
     return;
   }
 
-  // EN PRODUCCIÓN:
   // const { error } = await supabase.auth.signUp({ email, password: pass })
   // Luego insertar en tabla "usuarios" el nombre y rol
   showToast("Registro listo para conectar con Supabase.");
@@ -523,34 +541,50 @@ function updateFinanceChart(labels, ingresos, egresos) {
    10. INICIALIZACIÓN
    ============================================================ */
 
-window.addEventListener("load", () => {
-  checkGoogleRedirect(); // detectar retorno de Google OAuth
-  initProductionChart(); // crear gráfica vacía del dashboard
-  updateBadgeNotif(0); // badge en 0 hasta que carguen alertas reales
+async function cargarDashboard() {
+  // KPI: Cultivos activos
+  const { count: cultivos } = await supabase
+    .from("cultivos")
+    .select("*", { count: "exact", head: true })
+    .eq("estado", "Activo");
+  updateKpi("kpi-cultivos", cultivos ?? 0);
 
-  // ── CUANDO TENGAS SUPABASE CONECTADO, AGREGA AQUÍ: ──────────
-  //
-  // 1. Obtener sesión activa:
-  //    const { data: { session } } = await supabase.auth.getSession()
-  //    if (session) {
-  //      document.getElementById('login').classList.add('hidden')
-  //      // cargar perfil del usuario:
-  //      const { data: perfil } = await supabase
-  //        .from('usuarios').select('nombre,rol').eq('id', session.user.id).single()
-  //      setTopbarUser(perfil)
-  //    }
-  //
-  // 2. Cargar KPIs del dashboard:
-  //    const { count: cultivos } = await supabase.from('cultivos')
-  //      .select('*', { count: 'exact', head: true }).eq('estado', 'Activo')
-  //    updateKpi('kpi-cultivos', cultivos)
-  //    ... igual para animales, inventario y balance
-  //
-  // 3. Cargar alertas recientes:
-  //    const { data: alertas } = await supabase.from('alertas')
-  //      .select('*').eq('leida', false).order('fecha_creacion', { ascending: false }).limit(5)
-  //    renderAlertas(alertas)
-  //    updateBadgeNotif(alertas.length)
-  //
-  // ────────────────────────────────────────────────────────────
+  // KPI: Animales activos
+  const { count: animales } = await supabase
+    .from("animales")
+    .select("*", { count: "exact", head: true })
+    .eq("estado", "Activo");
+  updateKpi("kpi-animales", animales ?? 0);
+
+  // Alertas no leídas
+  const { data: alertas } = await supabase
+    .from("alertas")
+    .select("*")
+    .eq("leida", false)
+    .order("fecha_creacion", { ascending: false })
+    .limit(5);
+
+  updateBadgeNotif(alertas?.length ?? 0);
+}
+
+window.addEventListener("load", async () => {
+  checkGoogleRedirect();
+  initProductionChart();
+  updateBadgeNotif(0);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session) {
+    const { data: perfil } = await supabase
+      .from("usuarios")
+      .select("nombre, rol")
+      .eq("id", session.user.id)
+      .single();
+
+    document.getElementById("login").classList.add("hidden");
+    setTopbarUser(perfil);
+    cargarDashboard();
+  }
 });
