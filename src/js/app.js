@@ -588,3 +588,20 @@ window.addEventListener("load", async () => {
     cargarDashboard();
   }
 });
+
+window.login = login;
+window.logout = logout;
+window.showPage = showPage;
+window.openModal = openModal;
+window.closeModals = closeModals;
+window.saveForm = saveForm;
+window.toggleSidebar = toggleSidebar;
+window.showRegister = showRegister;
+window.showLoginScreen = showLoginScreen;
+window.register = register;
+window.signInWithGoogle = signInWithGoogle;
+window.recoverPassword = recoverPassword;
+window.filterTable = filterTable;
+window.validateArea = validateArea;
+window.updateChart = updateChart;
+window.calculateHarvest = calculateHarvest;
