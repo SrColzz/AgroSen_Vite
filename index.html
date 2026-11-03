@@ -4,6 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("agrosen-theme");
+        if (savedTheme === "light" || savedTheme === "dark")
+          document.documentElement.dataset.theme = savedTheme;
+      } catch (_) {}
+    </script>
     <meta
       content="AgroNext - Sistema Integral de Gestión Agropecuaria"
       name="description"
@@ -198,10 +205,7 @@
           <span class="ico">🔔</span><span>Alertas</span>
         </button>
         <div class="nav-title">Sistema</div>
-        <button
-          class="nav-item"
-          onclick="showToast('Configuración disponible en la versión backend')"
-        >
+        <button class="nav-item" onclick="openModal('modalConfiguracion')">
           <span class="ico">⚙</span><span>Configuración</span>
         </button>
         <button class="nav-item" onclick="logout()">
@@ -223,7 +227,7 @@
             <button class="icon-btn" onclick="showPage('alertas')">
               🔔<span class="badge" id="badge-notif">0</span></button
             ><button class="icon-btn" onclick="openModal('modalAlert')">
-              ＋
+              +
             </button>
             <div class="user">
               <div class="avatar" id="topbar-avatar">?</div>
@@ -238,7 +242,7 @@
           <section class="page active" id="page-dashboard">
             <div class="page-head">
               <div>
-                <span class="eyebrow">Panel ejecutivo · RF-070</span>
+                <span class="eyebrow">Panel ejecutivo</span>
                 <h1>Bienvenido 👋</h1>
                 <p>
                   Resumen de cultivos, producción pecuaria, inventarios,
@@ -291,7 +295,7 @@
               </div>
             </div>
             <div class="grid dashboard-grid" style="margin-top: 18px">
-              <div class="card">
+              <div class="card glass-panel">
                 <div class="card-head">
                   <div>
                     <h2>Producción e ingresos</h2>
@@ -313,11 +317,10 @@
                   <canvas id="productionChart"></canvas>
                 </div>
               </div>
-              <div class="card">
+              <div class="card glass-panel">
                 <div class="card-head">
                   <div>
                     <h2>Alertas importantes</h2>
-                    <span>RF-080 · RF-083</span>
                   </div>
                   <button
                     class="btn btn-soft btn-sm"
@@ -331,7 +334,7 @@
                 </div>
               </div>
             </div>
-            <div class="card" style="margin-top: 18px">
+            <div class="card glass-panel" style="margin-top: 18px">
               <div class="card-head">
                 <div>
                   <h2>Accesos rápidos</h2>
@@ -340,20 +343,16 @@
               </div>
               <div class="grid quick-grid">
                 <button class="quick" onclick="openModal('modalFinca')">
-                  🏡<b>Registrar finca</b
-                  ><span>RF-010 · Crear nueva finca</span>
+                  🏡<b>Registrar finca</b><span>Crear nueva finca</span>
                 </button>
                 <button class="quick" onclick="openModal('modalCultivo')">
-                  🌱<b>Planificar cultivo</b
-                  ><span>RF-020 · Programar siembra</span>
+                  🌱<b>Planificar cultivo</b><span>Programar siembra</span>
                 </button>
                 <button class="quick" onclick="openModal('modalAnimal')">
-                  🐄<b>Registrar animal</b
-                  ><span>RF-030 · Crear ficha individual</span>
+                  🐄<b>Registrar animal</b><span>Crear ficha individual</span>
                 </button>
                 <button class="quick" onclick="openModal('modalMovimiento')">
-                  📦<b>Movimiento inventario</b
-                  ><span>RF-040/041 · Entrada o salida</span>
+                  📦<b>Movimiento inventario</b><span>Entrada o salida</span>
                 </button>
               </div>
             </div>
@@ -361,7 +360,6 @@
           <section class="page" id="page-fincas">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-010 → RF-015</span>
                 <h1>Fincas y lotes</h1>
                 <p>
                   Registra fincas, divide parcelas, valida áreas y consulta su
@@ -451,7 +449,6 @@
           <section class="page" id="page-agricola">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-020 → RF-025</span>
                 <h1>Módulo agrícola</h1>
                 <p>
                   Planificación de cultivos, labores culturales, consumo de
@@ -517,6 +514,40 @@
             </div>
             <div class="card" style="margin-top: 18px">
               <div class="card-head">
+                <div>
+                  <h2>Catálogo de cultivos</h2>
+                  <span>Registra los cultivos y variedades que utilizas.</span>
+                </div>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="openModal('modalTipoCultivo')"
+                >
+                  ＋ Agregar cultivo
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="tiposCultivoTable">
+                  <thead>
+                    <tr>
+                      <th>Cultivo</th>
+                      <th>Variedad</th>
+                      <th>Ciclo (días)</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="empty" colspan="5">
+                        Sin cultivos en el catálogo.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
                 <h2>Cultivos activos</h2>
                 <span>Historial y seguimiento</span>
               </div>
@@ -530,12 +561,79 @@
                       <th>Siembra</th>
                       <th>Cosecha estimada</th>
                       <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="empty" colspan="7">
+                        Sin datos. Conecta la base de datos para ver registros.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Labores culturales</h2>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalLabor')"
+                >
+                  Registrar labor
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="laboresTable">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Actividad</th>
+                      <th>Cultivo</th>
+                      <th>Lote</th>
+                      <th>Insumo</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td class="empty" colspan="6">
-                        Sin datos. Conecta la base de datos para ver registros.
+                        Sin labores registradas.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Cosechas registradas</h2>
+                <button
+                  class="btn btn-soft btn-sm"
+                  onclick="openModal('modalCosecha')"
+                >
+                  Registrar cosecha
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="cosechasTable">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Cultivo</th>
+                      <th>Lote</th>
+                      <th>Cantidad</th>
+                      <th>Calidad</th>
+                      <th>Tipo</th>
+                      <th>Destino</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="empty" colspan="8">
+                        Sin cosechas registradas.
                       </td>
                     </tr>
                   </tbody>
@@ -546,7 +644,6 @@
           <section class="page" id="page-pecuario">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-030 → RF-039</span>
                 <h1>Módulo pecuario</h1>
                 <p>
                   Fichas individuales, trazabilidad, sanidad, reproducción,
@@ -603,9 +700,9 @@
                 <h2>Animales registrados</h2>
                 <button
                   class="btn btn-soft btn-sm"
-                  onclick="showToast('Exportación de ficha preparada para PDF')"
+                  onclick="exportarAnimalesCSV()"
                 >
-                  PDF
+                  Exportar CSV
                 </button>
               </div>
               <div class="table-wrap">
@@ -618,36 +715,144 @@
                       <th>Sexo</th>
                       <th>Nacimiento</th>
                       <th>Trazabilidad</th>
+                      <th>Ubicación</th>
                       <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td class="empty" colspan="7">
-                        Sin datos. Conecta la base de datos para ver registros.
+                      <td class="empty" colspan="9">
+                        No hay animales registrados.
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
+            <div class="pecuario-registros">
+              <div class="card" style="margin-top: 18px">
+                <div class="card-head">
+                  <h2>Control sanitario</h2>
+                  <button
+                    class="btn btn-soft btn-sm"
+                    onclick="openModal('modalEventoSanitario')"
+                  >
+                    ＋ Registrar evento
+                  </button>
+                </div>
+                <div class="table-wrap">
+                  <table class="table" id="eventosSanitariosTable">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Animal</th>
+                        <th>Tipo</th>
+                        <th>Producto o intervención</th>
+                        <th>Veterinario</th>
+                        <th>Próxima fecha</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="empty" colspan="7">
+                          Sin eventos sanitarios.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card" style="margin-top: 18px">
+                <div class="card-head">
+                  <h2>Pesajes</h2>
+                  <button
+                    class="btn btn-soft btn-sm"
+                    onclick="openModal('modalPesaje')"
+                  >
+                    ＋ Registrar pesaje
+                  </button>
+                </div>
+                <div class="table-wrap">
+                  <table class="table" id="pesajesTable">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Animal</th>
+                        <th>Peso</th>
+                        <th>Condición</th>
+                        <th>Observaciones</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="empty" colspan="6">
+                          Sin pesajes registrados.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card" style="margin-top: 18px">
+                <div class="card-head">
+                  <h2>Producción animal</h2>
+                  <button
+                    class="btn btn-soft btn-sm"
+                    onclick="openModal('modalProduccionAnimal')"
+                  >
+                    ＋ Registrar producción
+                  </button>
+                </div>
+                <div class="table-wrap">
+                  <table class="table" id="produccionesAnimalTable">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Animal</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Observaciones</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="empty" colspan="6">
+                          Sin producción registrada.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </section>
           <section class="page" id="page-inventario">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-040 → RF-047</span>
                 <h1>Gestión de inventarios</h1>
                 <p>
                   Entradas, salidas, stock en tiempo real, vencimientos,
                   categorías, valorización e historial.
                 </p>
               </div>
-              <button
-                class="btn btn-primary"
-                onclick="openModal('modalMovimiento')"
-              >
-                ＋ Registrar movimiento
-              </button>
+              <div class="actions">
+                <button
+                  class="btn btn-soft"
+                  onclick="openModal('modalProducto')"
+                >
+                  Agregar producto
+                </button>
+                <button
+                  class="btn btn-primary"
+                  onclick="openModal('modalMovimiento')"
+                >
+                  ＋ Registrar movimiento
+                </button>
+              </div>
             </div>
             <div class="grid kpis">
               <div class="card kpi">
@@ -689,8 +894,11 @@
                   class="search"
                   oninput="filterTable('stockTable', this.value)"
                   placeholder="🔎 Buscar producto..."
-                /><select>
-                  <option>Todas las categorías</option>
+                /><select
+                  id="inventario-filtro-categoria"
+                  onchange="cargarInventario()"
+                >
+                  <option value="">Todas las categorías</option>
                   <option>Agrícolas</option>
                   <option>Pecuarios</option>
                   <option>Herramientas</option>
@@ -717,12 +925,43 @@
                       <th>Vencimiento</th>
                       <th>Valor</th>
                       <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td class="empty" colspan="7">
-                        Sin datos. Conecta la base de datos para ver registros.
+                      <td class="empty" colspan="8">
+                        No hay productos registrados.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card" style="margin-top: 18px">
+              <div class="card-head">
+                <h2>Movimientos recientes</h2>
+                <span>Historial de entradas y salidas</span>
+              </div>
+              <div class="table-wrap">
+                <table class="table" id="movimientosTable">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Producto</th>
+                      <th>Tipo</th>
+                      <th>Cantidad</th>
+                      <th>Costo unitario</th>
+                      <th>Proveedor</th>
+                      <th>Vencimiento</th>
+                      <th>Detalle</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="empty" colspan="9">
+                        No hay movimientos registrados.
                       </td>
                     </tr>
                   </tbody>
@@ -733,7 +972,6 @@
           <section class="page" id="page-financiero">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-050 → RF-058</span>
                 <h1>Módulo financiero</h1>
                 <p>
                   Ingresos, gastos, costos por actividad, rentabilidad, flujo de
@@ -772,7 +1010,6 @@
                 <div>
                   <p>Rentabilidad</p>
                   <h3 id="kpi-rentabilidad">—</h3>
-                  <span class="trend"></span>
                 </div>
                 <div class="icon">📈</div>
               </div>
@@ -789,14 +1026,13 @@
               <div class="card">
                 <div class="card-head">
                   <h2>Flujo de caja</h2>
-                  <span>RF-054 · mensual</span>
+                  <span>mensual</span>
                 </div>
                 <div class="chart-box"><canvas id="financeChart"></canvas></div>
               </div>
               <div class="card">
                 <div class="card-head">
                   <h2>Rentabilidad por actividad</h2>
-                  <span>RF-053</span>
                 </div>
                 <div class="alerts">
                   <p class="empty">
@@ -810,7 +1046,6 @@
           <section class="page" id="page-rrhh">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-060 → RF-067</span>
                 <h1>Recursos humanos</h1>
                 <p>
                   Empleados, contratos, asistencia, horas extras, tareas,
@@ -895,7 +1130,6 @@
           <section class="page" id="page-reportes">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-070 → RF-077</span>
                 <h1>Reportes y Analytics</h1>
                 <p>
                   Dashboards, gráficas dinámicas, reportes predefinidos y
@@ -1014,7 +1248,6 @@
           <section class="page" id="page-alertas">
             <div class="page-head">
               <div>
-                <span class="eyebrow">RF-080 → RF-084</span>
                 <h1>Alertas y notificaciones</h1>
                 <p>
                   Centraliza eventos críticos, actividades pendientes y
@@ -1071,7 +1304,7 @@
     <div class="modal" id="modalFinca">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar finca · RF-010</h2>
+          <h2>Registrar finca</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1105,27 +1338,30 @@
             </select>
           </div>
           <div class="field full">
-            <label>Lotes / parcelas</label
-            ><textarea
-              id="finca-lotes"
-              placeholder="Ej. L-01: 4 ha · café | L-02: 3 ha · plátano"
-              rows="3"
-            ></textarea
-            ><small class="muted"
-              >RF-014: la suma de áreas de lotes no debe superar el área
-              total.</small
+            <label for="finca-cantidad-lotes">Cantidad de lotes</label>
+            <input
+              id="finca-cantidad-lotes"
+              type="number"
+              min="0"
+              max="30"
+              value="0"
+              oninput="renderLoteFields()"
+            />
+            <small class="muted"
+              >Luego completa el nombre y el área de cada lote. La suma no puede
+              superar el área de la finca.</small
             >
+          </div>
+          <div class="field full" id="finca-lotes" aria-live="polite">
+            <div id="finca-lotes-fields" class="finca-lotes-fields"></div>
           </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="
-              saveForm(
-                'Finca registrada correctamente · validación de áreas aplicada',
-              )
-            "
+            id="saveFincaButton"
+            onclick="saveFinca()"
           >
             Guardar finca
           </button>
@@ -1135,17 +1371,30 @@
     <div class="modal" id="modalCultivo">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Planificar cultivo · RF-020</h2>
+          <h2>Planificar cultivo</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Tipo de cultivo</label
-            ><input id="cultivo-tipo" placeholder="Ej. Café" />
+            <label for="cultivo-tipo">Tipo de cultivo</label>
+            <select id="cultivo-tipo" onchange="seleccionarCultivoCatalogo()">
+              <option value="">Carga el catálogo...</option>
+            </select>
+            <button
+              class="btn btn-soft btn-sm"
+              type="button"
+              onclick="openModal('modalTipoCultivo')"
+            >
+              Agregar al catálogo
+            </button>
           </div>
           <div class="field">
             <label>Variedad</label
-            ><input id="cultivo-variedad" placeholder="Ej. Caturra" />
+            ><input
+              id="cultivo-variedad"
+              placeholder="Se completa desde el catálogo"
+              readonly
+            />
           </div>
           <div class="field">
             <label>Lote</label
@@ -1155,23 +1404,29 @@
           </div>
           <div class="field">
             <label>Cantidad de semilla</label
-            ><input placeholder="Kg / unidades" />
+            ><input id="cultivo-semilla" min="0.01" step="0.01" type="number" />
+          </div>
+          <div class="field">
+            <label>Unidad de semilla</label>
+            <select id="cultivo-semilla-unidad">
+              <option value="kg">Kilogramos</option>
+              <option value="unidades">Unidades</option>
+            </select>
           </div>
           <div class="field">
             <label>Fecha de siembra</label
-            ><input id="cultivo-siembra" type="date" />
+            ><input
+              id="cultivo-siembra"
+              oninput="calculateHarvest()"
+              type="date"
+            />
           </div>
           <div class="field">
             <label>Ciclo (días)</label
-            ><input
-              id="cycle"
-              oninput="calculateHarvest()"
-              type="number"
-              value="120"
-            />
+            ><input id="cycle" readonly type="number" value="" />
           </div>
           <div class="field full">
-            <label>Fecha estimada de cosecha · RF-021</label
+            <label>Fecha estimada de cosecha</label
             ><input id="harvest" readonly="" />
           </div>
         </div>
@@ -1179,11 +1434,50 @@
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="
-              saveForm('Cultivo planificado y fecha de cosecha calculada')
-            "
+            id="saveCultivoButton"
+            onclick="saveCultivo()"
           >
             Guardar planificación
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalTipoCultivo">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Agregar cultivo al catálogo</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label for="tipo-cultivo-nombre">Nombre del cultivo</label>
+            <input id="tipo-cultivo-nombre" placeholder="Ej. Café" />
+          </div>
+          <div class="field">
+            <label for="tipo-cultivo-variedad">Variedad (opcional)</label>
+            <input id="tipo-cultivo-variedad" placeholder="Ej. Caturra" />
+          </div>
+          <div class="field">
+            <label for="tipo-cultivo-ciclo">Ciclo productivo (días)</label>
+            <input
+              id="tipo-cultivo-ciclo"
+              type="number"
+              min="1"
+              step="1"
+              value="120"
+            />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">
+            Cancelar
+          </button>
+          <button
+            class="btn btn-primary"
+            id="saveTipoCultivoButton"
+            onclick="guardarTipoCultivo()"
+          >
+            Guardar en catálogo
           </button>
         </div>
       </div>
@@ -1191,51 +1485,360 @@
     <div class="modal" id="modalAnimal">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar animal · RF-030/031</h2>
+          <h2>Registrar animal</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Especie</label
-            ><select id="animal-especie">
-              <option>Bovino</option>
-              <option>Porcino</option>
-              <option>Ave</option>
-              <option>Otro</option>
+            <label for="animal-especie">Especie</label
+            ><select id="animal-especie" onchange="cargarRazasAnimal()">
+              <option value="">Carga el catálogo...</option>
             </select>
           </div>
-          <div class="field">
-            <label>Raza</label
-            ><input id="animal-raza" placeholder="Ej. Holstein" />
+          <div class="field" id="animal-especie-detalle-wrap" hidden>
+            <label for="animal-especie-detalle"
+              >Especifica la especie (si elegiste Otro)</label
+            >
+            <input id="animal-especie-detalle" placeholder="Ej. Camélido" />
           </div>
           <div class="field">
-            <label>Sexo</label
+            <label for="animal-raza">Raza</label>
+            <select id="animal-raza" onchange="actualizarDetalleRazaAnimal()">
+              <option value="">Selecciona una especie</option>
+            </select>
+          </div>
+          <div class="field" id="animal-raza-detalle-wrap" hidden>
+            <label for="animal-raza-detalle"
+              >Especifica la raza (si elegiste Otra)</label
+            >
+            <input id="animal-raza-detalle" placeholder="Nombre de la raza" />
+          </div>
+          <div class="field">
+            <label for="animal-sexo">Sexo</label
             ><select id="animal-sexo">
               <option>Hembra</option>
               <option>Macho</option>
+              <option>Indeterminado</option>
             </select>
           </div>
           <div class="field">
-            <label>Identificación</label
+            <label for="animal-id">Identificación</label
             ><input id="animal-id" placeholder="BV-001" />
           </div>
           <div class="field">
-            <label>Fecha de nacimiento</label><input type="date" />
+            <label for="animal-nacimiento">Fecha de nacimiento</label
+            ><input id="animal-nacimiento" type="date" />
           </div>
           <div class="field">
-            <label>Código de trazabilidad</label
-            ><input readonly="" value="TRZ-AG-AUTO" />
+            <label for="animal-lote">Lote o ubicación (opcional)</label>
+            <select id="animal-lote">
+              <option value="">Sin lote asignado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="animal-ubicacion">Ubicación adicional (opcional)</label>
+            <input id="animal-ubicacion" placeholder="Ej. Establo norte" />
+          </div>
+          <div class="field">
+            <label for="animal-estado">Estado</label>
+            <select id="animal-estado">
+              <option>Activo</option>
+              <option>Vendido</option>
+              <option>Fallecido</option>
+              <option>Trasladado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="animal-trazabilidad">Código de trazabilidad</label>
+            <input
+              id="animal-trazabilidad"
+              readonly
+              placeholder="Se genera al guardar"
+            />
+          </div>
+          <div class="field full">
+            <label for="animal-observaciones">Observaciones</label>
+            <textarea id="animal-observaciones" rows="3"></textarea>
           </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="
-              saveForm('Animal registrado con código único de trazabilidad')
-            "
+            id="saveAnimalButton"
+            onclick="guardarAnimal()"
           >
             Guardar animal
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalConfiguracion">
+      <div class="modal-box settings-box">
+        <div class="modal-head">
+          <h2>Configuración de apariencia</h2>
+          <button
+            class="close"
+            onclick="closeModals()"
+            aria-label="Cerrar configuración"
+          >
+            ×
+          </button>
+        </div>
+        <p class="settings-description">
+          Elige el tema que prefieres. La selección se conservará en este
+          dispositivo y el efecto glass seguirá activo en ambos modos.
+        </p>
+        <div class="field settings-theme-field">
+          <label for="theme-select">Tema de la interfaz</label>
+          <select id="theme-select" onchange="cambiarTema(this.value)">
+            <option value="dark">Modo oscuro</option>
+            <option value="light">Modo claro</option>
+          </select>
+        </div>
+        <div class="settings-preview" aria-live="polite">
+          <span class="settings-preview-dot"></span
+          ><span id="theme-description">Cristal oscuro verde bosque</span>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="closeModals()">Listo</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalEventoSanitario">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar evento sanitario</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label for="evento-animal">Animal</label
+            ><select id="evento-animal">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="evento-tipo">Tipo de evento</label
+            ><select id="evento-tipo">
+              <option>Vacunación</option>
+              <option>Desparasitación</option>
+              <option>Tratamiento</option>
+              <option>Consulta veterinaria</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="evento-producto"
+              >Producto o intervención (opcional)</label
+            ><input id="evento-producto" maxlength="160" />
+          </div>
+          <div class="field">
+            <label for="evento-veterinario">Veterinario (opcional)</label
+            ><input id="evento-veterinario" maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="evento-fecha">Fecha</label
+            ><input id="evento-fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="evento-proxima-fecha">Próxima fecha (opcional)</label
+            ><input id="evento-proxima-fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="evento-costo">Costo (opcional)</label
+            ><input id="evento-costo" type="number" min="0" step="0.01" />
+          </div>
+          <div class="field full">
+            <label for="evento-observaciones">Observaciones (opcional)</label
+            ><textarea
+              id="evento-observaciones"
+              rows="3"
+              maxlength="1000"
+            ></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            id="saveEventoSanitarioButton"
+            onclick="guardarEventoSanitario()"
+          >
+            Guardar evento
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalPesaje">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar pesaje</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label for="pesaje-animal">Animal</label
+            ><select id="pesaje-animal">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="pesaje-fecha">Fecha</label
+            ><input id="pesaje-fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="pesaje-peso">Peso (kg)</label
+            ><input id="pesaje-peso" type="number" min="0.01" step="0.01" />
+          </div>
+          <div class="field">
+            <label for="pesaje-condicion">Condición (opcional)</label
+            ><input
+              id="pesaje-condicion"
+              maxlength="80"
+              placeholder="Ej. Buena"
+            />
+          </div>
+          <div class="field full">
+            <label for="pesaje-observaciones">Observaciones (opcional)</label
+            ><textarea
+              id="pesaje-observaciones"
+              rows="3"
+              maxlength="1000"
+            ></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            id="savePesajeButton"
+            onclick="guardarPesaje()"
+          >
+            Guardar pesaje
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalProduccionAnimal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Registrar producción animal</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label for="produccion-animal">Animal</label
+            ><select id="produccion-animal">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="produccion-tipo">Tipo de producción</label
+            ><select id="produccion-tipo">
+              <option>Leche</option>
+              <option>Huevos</option>
+              <option>Carne</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="produccion-cantidad">Cantidad</label
+            ><input
+              id="produccion-cantidad"
+              type="number"
+              min="0.01"
+              step="0.01"
+            />
+          </div>
+          <div class="field">
+            <label for="produccion-unidad">Unidad</label
+            ><select id="produccion-unidad">
+              <option value="l">Litros</option>
+              <option value="ml">Mililitros</option>
+              <option value="kg">Kilogramos</option>
+              <option value="g">Gramos</option>
+              <option value="unidades">Unidades</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="produccion-fecha">Fecha</label
+            ><input id="produccion-fecha" type="date" />
+          </div>
+          <div class="field full">
+            <label for="produccion-observaciones"
+              >Observaciones (opcional)</label
+            ><textarea
+              id="produccion-observaciones"
+              rows="3"
+              maxlength="1000"
+            ></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            id="saveProduccionAnimalButton"
+            onclick="guardarProduccionAnimal()"
+          >
+            Guardar producción
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="modalProducto">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h2>Agregar producto</h2>
+          <button class="close" onclick="closeModals()">×</button>
+        </div>
+        <div class="grid form-grid">
+          <div class="field">
+            <label for="producto-nombre">Nombre</label
+            ><input
+              id="producto-nombre"
+              placeholder="Ej. Fertilizante orgánico"
+            />
+          </div>
+          <div class="field">
+            <label for="producto-categoria">Categoría</label
+            ><select id="producto-categoria">
+              <option>Agrícolas</option>
+              <option>Pecuarios</option>
+              <option>Herramientas</option>
+              <option>Terminados</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="producto-unidad">Unidad</label
+            ><select id="producto-unidad">
+              <option value="kg">Kilogramos</option>
+              <option value="l">Litros</option>
+              <option value="unidades">Unidades</option>
+              <option value="sacos">Sacos</option>
+              <option value="toneladas">Toneladas</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="producto-stock-minimo">Alerta de stock mínimo</label
+            ><input
+              id="producto-stock-minimo"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-white" onclick="closeModals()">Cancelar</button
+          ><button
+            class="btn btn-primary"
+            id="saveProductoButton"
+            onclick="guardarProducto()"
+          >
+            Guardar producto
           </button>
         </div>
       </div>
@@ -1243,28 +1846,30 @@
     <div class="modal" id="modalMovimiento">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Movimiento de inventario · RF-040/041</h2>
+          <h2>Movimiento de inventario</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
           <div class="field">
             <label>Tipo</label
             ><select id="mov-tipo">
-              <option>Ingreso / compra</option>
-              <option>Salida / consumo</option>
+              <option value="Entrada">Entrada / compra</option>
+              <option value="Salida">Salida / consumo</option>
             </select>
           </div>
           <div class="field">
-            <label>Producto</label
-            ><input id="mov-producto" placeholder="Nombre del insumo" />
+            <label for="mov-producto">Producto</label
+            ><select id="mov-producto">
+              <option value="">Carga el catálogo...</option>
+            </select>
           </div>
           <div class="field">
             <label>Cantidad</label
-            ><input id="mov-cantidad" min="0" type="number" />
+            ><input id="mov-cantidad" min="0.01" step="0.01" type="number" />
           </div>
           <div class="field">
             <label>Precio unitario</label
-            ><input id="mov-precio" min="0" type="number" />
+            ><input id="mov-precio" min="0" step="0.01" type="number" />
           </div>
           <div class="field">
             <label>Proveedor</label
@@ -1278,7 +1883,7 @@
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="saveForm('Movimiento registrado y stock actualizado')"
+            onclick="guardarMovimientoInventario()"
           >
             Guardar movimiento
           </button>
@@ -1288,13 +1893,13 @@
     <div class="modal" id="modalLabor">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar labor cultural · RF-022/023</h2>
+          <h2>Registrar labor cultural</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Actividad</label
-            ><select>
+            <label for="labor-actividad">Actividad</label>
+            <select id="labor-actividad">
               <option>Riego</option>
               <option>Fertilización</option>
               <option>Control de plagas</option>
@@ -1302,25 +1907,63 @@
             </select>
           </div>
           <div class="field">
-            <label>Cultivo / lote</label><input placeholder="Café · L-03" />
+            <label for="labor-lote">Lote</label>
+            <select id="labor-lote" onchange="cargarCultivosDelLote('labor')">
+              <option value="">Selecciona un lote</option>
+            </select>
           </div>
           <div class="field">
-            <label>Insumo utilizado</label><input placeholder="Opcional" />
+            <label for="labor-cultivo">Cultivo</label>
+            <select id="labor-cultivo">
+              <option value="">Selecciona primero un lote</option>
+            </select>
           </div>
           <div class="field">
-            <label>Cantidad</label><input min="0" type="number" />
+            <label for="labor-fecha">Fecha</label>
+            <input id="labor-fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="labor-producto"
+              >Descontar producto del inventario (opcional)</label
+            >
+            <select
+              id="labor-producto"
+              onchange="actualizarUnidadProductoLabor()"
+            >
+              <option value="">Sin descuento de inventario</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="labor-insumo"
+              >Descripción manual (si no está en el catálogo)</label
+            >
+            <input id="labor-insumo" placeholder="Ej. Fertilizante" />
+          </div>
+          <div class="field">
+            <label for="labor-cantidad">Cantidad utilizada</label>
+            <input id="labor-cantidad" min="0.01" step="0.01" type="number" />
+          </div>
+          <div class="field">
+            <label for="labor-unidad">Unidad</label>
+            <select id="labor-unidad">
+              <option value="kg">Kilogramos</option>
+              <option value="l">Litros</option>
+              <option value="unidades">Unidades</option>
+              <option value="sacos">Sacos</option>
+              <option value="toneladas">Toneladas</option>
+            </select>
           </div>
           <div class="field full">
-            <label>Observaciones</label><textarea rows="3"></textarea>
+            <label for="labor-observaciones">Observaciones</label>
+            <textarea id="labor-observaciones" rows="3"></textarea>
           </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="
-              saveForm('Labor registrada y consumo descontado del inventario')
-            "
+            id="saveLaborButton"
+            onclick="guardarLabor()"
           >
             Guardar labor
           </button>
@@ -1330,35 +1973,71 @@
     <div class="modal" id="modalCosecha">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar cosecha · RF-024</h2>
+          <h2>Registrar cosecha</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
           <div class="field">
-            <label>Cultivo / lote</label><input placeholder="Café · L-03" />
+            <label for="cosecha-lote">Lote</label>
+            <select
+              id="cosecha-lote"
+              onchange="cargarCultivosDelLote('cosecha')"
+            >
+              <option value="">Selecciona un lote</option>
+            </select>
           </div>
           <div class="field">
-            <label>Cantidad</label><input min="0" type="number" />
+            <label for="cosecha-cultivo">Cultivo</label>
+            <select id="cosecha-cultivo">
+              <option value="">Selecciona primero un lote</option>
+            </select>
           </div>
           <div class="field">
-            <label>Calidad</label
-            ><select>
+            <label for="cosecha-cantidad">Cantidad cosechada</label>
+            <input id="cosecha-cantidad" min="0.01" step="0.01" type="number" />
+          </div>
+          <div class="field">
+            <label for="cosecha-unidad">Unidad</label>
+            <select id="cosecha-unidad">
+              <option value="kg">Kilogramos</option>
+              <option value="arrobas">Arrobas</option>
+              <option value="toneladas">Toneladas</option>
+              <option value="unidades">Unidades</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cosecha-calidad">Calidad</label>
+            <select id="cosecha-calidad">
               <option>Primera</option>
               <option>Segunda</option>
               <option>Mixta</option>
             </select>
           </div>
-          <div class="field"><label>Fecha</label><input type="date" /></div>
+          <div class="field">
+            <label for="cosecha-fecha">Fecha</label>
+            <input id="cosecha-fecha" type="date" />
+          </div>
+          <div class="field">
+            <label for="cosecha-tipo">Tipo de cosecha</label>
+            <select id="cosecha-tipo">
+              <option value="false">Parcial</option>
+              <option value="true">Final</option>
+            </select>
+          </div>
           <div class="field full">
-            <label>Destino</label
-            ><input placeholder="Venta / almacenamiento / cliente" />
+            <label for="cosecha-destino">Destino (opcional)</label>
+            <input
+              id="cosecha-destino"
+              placeholder="Venta / almacenamiento / cliente"
+            />
           </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-white" onclick="closeModals()">Cancelar</button
           ><button
             class="btn btn-primary"
-            onclick="saveForm('Cosecha registrada en el historial del cultivo')"
+            id="saveCosechaButton"
+            onclick="guardarCosecha()"
           >
             Guardar cosecha
           </button>
@@ -1368,7 +2047,7 @@
     <div class="modal" id="modalGasto">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar gasto · RF-050</h2>
+          <h2>Registrar gasto</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1418,7 +2097,7 @@
     <div class="modal" id="modalIngreso">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar ingreso · RF-051</h2>
+          <h2>Registrar ingreso</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1458,7 +2137,7 @@
     <div class="modal" id="modalEmpleado">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Registrar empleado · RF-060</h2>
+          <h2>Registrar empleado</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1499,7 +2178,7 @@
     <div class="modal" id="modalReporte">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Reporte personalizado · RF-073</h2>
+          <h2>Reporte personalizado</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1547,7 +2226,7 @@
     <div class="modal" id="modalAlert">
       <div class="modal-box">
         <div class="modal-head">
-          <h2>Preferencias de alertas · RF-084</h2>
+          <h2>Preferencias de alertas</h2>
           <button class="close" onclick="closeModals()">×</button>
         </div>
         <div class="grid form-grid">
@@ -1610,7 +2289,7 @@
               openModal('modalFinca');
             "
           >
-            🏡<b>Finca</b><span>RF-010</span></button
+            🏡<b>Finca</b></button
           ><button
             class="quick"
             onclick="
@@ -1618,7 +2297,7 @@
               openModal('modalCultivo');
             "
           >
-            🌱<b>Cultivo</b><span>RF-020</span></button
+            🌱<b>Cultivo</b></button
           ><button
             class="quick"
             onclick="
@@ -1626,7 +2305,7 @@
               openModal('modalAnimal');
             "
           >
-            🐄<b>Animal</b><span>RF-030</span></button
+            🐄<b>Animal</b></button
           ><button
             class="quick"
             onclick="
@@ -1634,7 +2313,7 @@
               openModal('modalMovimiento');
             "
           >
-            📦<b>Inventario</b><span>RF-040/041</span>
+            📦<b>Inventario</b>
           </button>
         </div>
       </div>
