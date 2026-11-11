@@ -215,3 +215,119 @@ plt.savefig("eda_matriz_dispersion.png", dpi=300)
 
 
 
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Carga y filtrado de datos departamentales (n = 32 departamentos válidos)
+df_dept = pd.read_csv("cuadro16_departamentos.csv", encoding="utf-8-sig")
+df_dept_clean = df_dept.drop(index=26).reset_index(drop=True)
+
+# Definición de variables predictora (X) y respuesta (y)
+X = df_dept_clean[["Total_hogares_miles"]]
+y = df_dept_clean["Hogares_internet_miles"]
+
+# Entrenamiento del modelo de Regresión Lineal
+modelo_lr = LinearRegression()
+modelo_lr.fit(X, y)
+
+# Predicciones y métricas de evaluación
+y_pred = modelo_lr.predict(X)
+pendiente = modelo_lr.coef_[0]
+intercepto = modelo_lr.intercept_
+r2 = r2_score(y, y_pred)
+rmse = np.sqrt(mean_squared_error(y, y_pred))
+
+print("=== PARÁMETROS DEL MODELO DE REGRESIÓN LINEAL ===")
+print(f"Pendiente (m / beta_1): {pendiente:.4f}")
+print(f"Intercepto (b / beta_0): {intercepto:.4f}")
+print(f"Ecuación: y = {pendiente:.4f} * X + ({intercepto:.4f})")
+print(f"Coeficiente de Determinación (R^2): {r2:.4f}")
+print(f"Error Cuadrático Medio (RMSE): {rmse:.4f} mil hogares")
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 5))
+plt.scatter(
+    X,
+    y,
+    color='#2b5c8f',
+    label='Datos reales departamentales',
+    alpha=0.8,
+    s=50,
+)
+plt.plot(
+    X,
+    y_pred,
+    color='#e74c3c',
+    linewidth=2,
+    label=f'Línea de Regresión: y = {pendiente:.2f}x + ({intercepto:.2f})',
+)
+plt.title(
+    'Modelo de Regresión Lineal: Hogares Campesinos vs Hogares con Internet',
+    fontsize=12,
+    fontweight='bold',
+)
+plt.xlabel('Total Hogares Campesinos (Miles)', fontsize=10)
+plt.ylabel('Hogares Campesinos con Internet (Miles)', fontsize=10)
+plt.legend()
+plt.tight_layout()
+plt.savefig('model_regresion_lineal.png', dpi=300)
+
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from sklearn.cluster import KMeans
+
+# Definición de variables para la clusterización
+X_cluster = df_dept_clean[['Total_hogares_miles', 'Porcentaje_internet']]
+
+# Configuración y entrenamiento de K-Means con K=3
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+df_dept_clean['Cluster_Id'] = kmeans.fit_predict(X_cluster)
+
+# Mapeo y caracterización de los Clústeres ordenados por volumen poblacional
+resumen_clusters = df_dept_clean.groupby('Cluster_Id').agg({
+    'Total_hogares_miles': 'mean',
+    'Hogares_internet_miles': 'mean',
+    'Porcentaje_internet': 'mean',
+    'Departamento': 'count'
+}).rename(columns={'Departamento': 'Cant_Departamentos'}).reset_index()
+
+print("=== CENTROIDES Y CARACTERIZACIÓN DE CLÚSTERES ===")
+print(resumen_clusters)
+
+
+# Mapeo de nombres ejecutivos a los clústeres según volumen poblacional
+nombres_cluster = {
+    0: 'Clúster 1: Escala Pequeña/Periférica',
+    2: 'Clúster 2: Escala Intermedia',
+    1: 'Clúster 3: Escala Masiva/Poblada',
+}
+df_dept_clean['Segmento_AgroSen'] = df_dept_clean['Cluster_Id'].map(
+    nombres_cluster
+)
+
+plt.figure(figsize=(9, 6))
+sns.scatterplot(
+    data=df_dept_clean,
+    x='Total_hogares_miles',
+    y='Porcentaje_internet',
+    hue='Segmento_AgroSen',
+    palette='Set1',
+    style='Segmento_AgroSen',
+    s=100,
+)
+plt.title(
+    'Modelo de Clusterización K-Means (Segmentación Territorial AgroSen)',
+    fontsize=12,
+    fontweight='bold',
+)
+plt.xlabel('Total Hogares Campesinos (Miles)', fontsize=10)
+plt.ylabel('Porcentaje de Acceso a Internet (%)', fontsize=10)
+plt.legend(title='Segmento Territorial', loc='lower right')
+plt.tight_layout()
+plt.savefig('model_clusterizacion.png', dpi=300)
