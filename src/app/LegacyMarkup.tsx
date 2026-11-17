@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { dispatchLegacyEvent } from "../shared/legacy-events";
+import { formatLocalizedNumber, formatNumberWhileTyping, ungroupNumber } from "../shared/number-format";
 import legacyMarkup from "./legacy-markup.html?raw";
 import { InventoryModule } from "../modules/inventory/InventoryModule";
 import { AgriculturalModule } from "../modules/agricultural/AgriculturalModule";
@@ -42,6 +43,14 @@ export function LegacyMarkup({ authenticated, actions }: { authenticated: boolea
   useEffect(() => {
     const element = root.current;
     if (!element || !actions) return;
+    element.querySelectorAll<HTMLInputElement>('input[type="number"]').forEach((input) => {
+      input.type = "text";
+      input.inputMode = "decimal";
+      input.dataset.numberFormat = "true";
+      input.addEventListener("focus", () => { input.value = ungroupNumber(input.value); });
+      input.addEventListener("input", () => formatNumberWhileTyping(input));
+      input.addEventListener("blur", () => { input.value = formatLocalizedNumber(input.value); });
+    });
     element.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
       const label = item.querySelector<HTMLElement>("span:not(.ico)")?.textContent?.trim();
       if (label) {
@@ -49,7 +58,16 @@ export function LegacyMarkup({ authenticated, actions }: { authenticated: boolea
         item.setAttribute("aria-label", label);
       }
     });
-    const onEvent = (event: Event) => dispatchLegacyEvent(event, actions);
+    const onEvent = (event: Event) => {
+      if (event.type === "click" && event.target instanceof Element) {
+        const button = event.target.closest<HTMLElement>("[data-legacy-click]");
+        const action = button?.getAttribute("data-legacy-click") || "";
+        if (/^(guardar|saveCultivo|saveFinca)\w*\s*\(/.test(action)) {
+          element.querySelectorAll<HTMLInputElement>("input[data-number-format]").forEach((input) => { input.value = ungroupNumber(input.value); });
+        }
+      }
+      dispatchLegacyEvent(event, actions);
+    };
     ["click", "change", "input"].forEach((eventName) => element.addEventListener(eventName, onEvent));
     return () => ["click", "change", "input"].forEach((eventName) => element.removeEventListener(eventName, onEvent));
   }, [actions]);

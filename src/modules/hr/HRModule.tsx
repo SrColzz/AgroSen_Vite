@@ -39,8 +39,8 @@ export function HRModule() {
         </div>
         <div className="table-wrap">
           <table className="table" id="empleadosTable">
-            <thead><tr><th>Empleado</th><th>Identificación</th><th>Cargo</th><th>Salario</th><th>Ingreso</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody><tr><td className="empty" colSpan={7}>Sin datos. Conecta la base de datos para ver registros.</td></tr></tbody>
+            <thead><tr><th>Empleado</th><th>Identificación</th><th>Cargo</th><th>Salario</th><th>Periodicidad</th><th>Ingreso</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody><tr><td className="empty" colSpan={8}>Sin datos. Conecta la base de datos para ver registros.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -49,15 +49,15 @@ export function HRModule() {
         <div className="card">
           <div className="card-head"><h2>Asistencia reciente</h2><span>Últimos registros</span></div>
           <div className="table-wrap"><table className="table" id="asistenciaTable">
-            <thead><tr><th>Fecha</th><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th></tr></thead>
-            <tbody><tr><td className="empty" colSpan={5}>Sin registros de asistencia.</td></tr></tbody>
+            <thead><tr><th>Fecha</th><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody><tr><td className="empty" colSpan={6}>Sin registros de asistencia.</td></tr></tbody>
           </table></div>
         </div>
         <div className="card">
           <div className="card-head"><h2>Nómina reciente</h2><span>Liquidaciones</span></div>
           <div className="table-wrap"><table className="table" id="nominaTable">
-            <thead><tr><th>Período</th><th>Empleado</th><th>Salario</th><th>Deducciones</th><th>Total pagado</th><th>Fecha de pago</th></tr></thead>
-            <tbody><tr><td className="empty" colSpan={6}>Sin nóminas registradas.</td></tr></tbody>
+            <thead><tr><th>Período</th><th>Empleado</th><th>Salario</th><th>Deducciones</th><th>Total pagado</th><th>Fecha de pago</th><th>Acciones</th></tr></thead>
+            <tbody><tr><td className="empty" colSpan={7}>Sin nóminas registradas.</td></tr></tbody>
           </table></div>
         </div>
       </div>

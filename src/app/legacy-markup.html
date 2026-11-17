@@ -39,7 +39,7 @@
         </button>
         <div class="nav-title">Sistema</div>
         <button class="nav-item" data-page="configuracion">
-          <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.8 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.8-1l-1.7.7-1.4-2.4L7.1 15a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.8-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.8 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1-.1 2Z"/></svg></span><span>Configuración</span>
+          <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 1.72l-.16 1.16a8 8 0 0 0-1.15.66l-1.1-.45a2 2 0 0 0-2.48.92l-.22.38a2 2 0 0 0 .48 2.63l.92.72a8 8 0 0 0 0 1.32l-.92.72a2 2 0 0 0-.48 2.63l.22.38a2 2 0 0 0 2.48.92l1.1-.45a8 8 0 0 0 1.15.66l.16 1.16A2 2 0 0 0 11.78 22h.44a2 2 0 0 0 2-1.72l.16-1.16a8 8 0 0 0 1.15-.66l1.1.45a2 2 0 0 0 2.48-.92l.22-.38a2 2 0 0 0-.48-2.63l-.92-.72a8 8 0 0 0 0-1.32l.92-.72a2 2 0 0 0 .48-2.63l-.22-.38a2 2 0 0 0-2.48-.92l-1.1.45a8 8 0 0 0-1.15-.66l-.16-1.16A2 2 0 0 0 12.22 2Z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Configuración</span>
         </button>
         <button class="nav-item" data-legacy-click="logout()">
           <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17 15 12l-5-5M15 12H3M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg></span><span>Cerrar sesión</span>
@@ -63,10 +63,20 @@
               +
             </button>
             <div class="user">
-              <div class="avatar" id="topbar-avatar">?</div>
-              <div>
-                <b id="topbar-nombre">Usuario</b
-                ><small id="topbar-rol">Cargando...</small>
+              <div class="user-identity">
+                <div class="avatar" id="topbar-avatar">?</div>
+                <div>
+                  <b id="topbar-nombre">Usuario</b
+                  ><small id="topbar-rol">Cargando...</small>
+                </div>
+              </div>
+              <div class="profile-actions" aria-label="Acciones de cuenta">
+                <button class="profile-action" aria-label="Configuración" title="Configuración" data-legacy-click="showPage('configuracion')">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 1.72l-.16 1.16a8 8 0 0 0-1.15.66l-1.1-.45a2 2 0 0 0-2.48.92l-.22.38a2 2 0 0 0 .48 2.63l.92.72a8 8 0 0 0 0 1.32l-.92.72a2 2 0 0 0-.48 2.63l.22.38a2 2 0 0 0 2.48.92l1.1-.45a8 8 0 0 0 1.15.66l.16 1.16A2 2 0 0 0 11.78 22h.44a2 2 0 0 0 2-1.72l.16-1.16a8 8 0 0 0 1.15-.66l1.1.45a2 2 0 0 0 2.48-.92l.22-.38a2 2 0 0 0-.48-2.63l-.92-.72a8 8 0 0 0 0-1.32l.92-.72a2 2 0 0 0 .48-2.63l-.22-.38a2 2 0 0 0-2.48-.92l-1.1.45a8 8 0 0 0-1.15-.66l-.16-1.16A2 2 0 0 0 12.22 2Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="profile-action" aria-label="Cerrar sesión" title="Cerrar sesión" data-legacy-click="logout()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17 15 12l-5-5M15 12H3M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg>
+                </button>
               </div>
             </div>
           </div>
@@ -667,7 +677,7 @@
           </div>
           <div class="field" id="mov-precio-field">
             <label>Precio unitario</label
-            ><input id="mov-precio" min="0" step="0.01" type="number" />
+            ><input id="mov-precio" min="0" step="0.01" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 5000 o 5,000" />
           </div>
           <div class="field" id="mov-proveedor-field">
             <label>Proveedor</label
@@ -971,6 +981,9 @@
           <div class="field"><label>Cargo</label><input id="emp-cargo" /></div>
           <div class="field">
             <label>Salario</label><input id="emp-salario" type="number" />
+          </div>
+          <div class="field">
+            <label>Periodicidad del salario</label><select id="emp-periodicidad"><option value="Mensual">Mensual</option><option value="Quincenal">Quincenal</option></select>
           </div>
           <div class="field">
             <label>Fecha de ingreso</label

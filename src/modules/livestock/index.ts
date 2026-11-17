@@ -1,7 +1,7 @@
 import { supabase } from "../../lib/supabase";
 import { appState } from "../../shared/state";
 import { escapeHtml, fechaLocalActual, formatDate, renderTable, showToast, updateKpi } from "../../shared/dom";
-import { actualizarRotulosEdicion, archivarRegistro, cargarDashboard, closeModals, openModal } from "../../app/controller";
+import { actualizarRotulosEdicion, archivarRegistro, reactivarRegistro, cargarDashboard, closeModals, openModal } from "../../app/controller";
 import { formatWeight, weightFromKg, weightToKg } from "../../shared/preferences";
 const doc: any = document;
 const arrayFrom: any = Array.from;
@@ -123,8 +123,7 @@ export async function asegurarLoteAnimal(idLote) {
 export async function cargarAnimales() {
   const { data, error } = await supabase
     .from("animales")
-    .select("id, id_especie, id_raza, especie_detalle, raza_detalle, id_lote, identificacion, codigo_trazabilidad, sexo, fecha_nacimiento, ubicacion, estado, observaciones")
-    .eq("activo", true)
+    .select("id, id_especie, id_raza, especie_detalle, raza_detalle, id_lote, identificacion, codigo_trazabilidad, sexo, fecha_nacimiento, ubicacion, estado, observaciones, activo")
     .order("identificacion", { ascending: true });
   if (error) {
     console.error("No se pudieron cargar los animales:", error);
@@ -191,7 +190,7 @@ export async function cargarAnimales() {
         <td>${escapeHtml(animal.codigo_trazabilidad)}</td>
         <td>${escapeHtml(ubicacion || "Sin ubicación asignada")}</td>
         <td><span class="status ${animal.estado === "Activo" ? "ok" : "info"}">${escapeHtml(animal.estado)}</span></td>
-        <td><button class="btn btn-soft btn-sm" onclick="editarAnimal('${animal.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="archivarAnimal('${animal.id}')">Archivar</button></td>
+        <td><button class="btn btn-soft btn-sm" data-legacy-click="editarAnimal('${animal.id}')">Editar</button> ${animal.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="archivarAnimal('${animal.id}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarAnimal('${animal.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarAnimal('${animal.id}')">Eliminar</button></td>
       </tr>
     `;
   });
@@ -297,6 +296,28 @@ export async function archivarAnimal(id) {
   }
 }
 
+export async function reactivarAnimal(id) {
+  if (await reactivarRegistro("animales", id, "el animal")) {
+    await cargarAnimales();
+    cargarDashboard();
+  }
+}
+
+export async function eliminarAnimal(id: string): Promise<void> {
+  if (!window.confirm("¿Eliminar permanentemente este animal y sus eventos sanitarios, pesajes y registros de producción? Esta acción no se puede deshacer.")) return;
+  const { error } = await supabase.rpc("eliminar_animal_pecuario", { p_id_animal: id });
+  if (error) {
+    console.error("No se pudo eliminar el animal y sus registros pecuarios:", error);
+    showToast(error.code === "PGRST202"
+      ? "Falta ejecutar eliminar_animal_pecuario_supabase.sql en Supabase."
+      : `No se pudo eliminar el animal: ${error.message}`);
+    return;
+  }
+  showToast("Animal y registros pecuarios eliminados permanentemente.");
+  await Promise.all([cargarAnimales(), cargarEventosSanitarios(), cargarPesajes(), cargarProduccionesAnimales()]);
+  await cargarDashboard();
+}
+
 export function exportarAnimalesCSV() {
   const tabla = doc.getElementById("animalesTable");
   const filas = arrayFrom(tabla.querySelectorAll("tr"));
@@ -363,7 +384,7 @@ const configuracionRegistrosPecuarios = {
 
 export async function cargarRegistrosPecuarios(tipo) {
   const config = configuracionRegistrosPecuarios[tipo];
-  const { data, error } = await supabase.from(config.tabla).select(config.columnas).eq("activo", true).order("fecha", { ascending: false });
+  const { data, error } = await supabase.from(config.tabla).select(`${config.columnas}, activo`).order("fecha", { ascending: false });
   if (error) {
     console.error(`No se pudieron cargar ${config.descripcion}:`, error);
     showToast(error.code === "PGRST205" || error.code === "42P01" ? "Falta ejecutar pecuario_supabase.sql en Supabase." : `No se pudieron cargar ${config.descripcion}.`);
@@ -390,7 +411,8 @@ export async function cargarRegistrosPecuarios(tipo) {
     else celdas = `<td>${formatDate(registro.fecha)}</td><td>${animal}</td><td>${escapeHtml(registro.tipo)}</td><td>${Number(registro.cantidad).toLocaleString("es-CO")} ${escapeHtml(registro.unidad)}</td><td>${escapeHtml(registro.observaciones || "—")}</td>`;
     const editar = tipo === "eventoSanitario" ? "editarEventoSanitario" : tipo === "pesaje" ? "editarPesaje" : "editarProduccionAnimal";
     const archivar = tipo === "eventoSanitario" ? "archivarEventoSanitario" : tipo === "pesaje" ? "archivarPesaje" : "archivarProduccionAnimal";
-    return `<tr>${celdas}<td><button class="btn btn-soft btn-sm" onclick="${editar}('${registro.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="${archivar}('${registro.id}')">Archivar</button></td></tr>`;
+    const descripcion = config.descripcion;
+    return `<tr>${celdas}<td>${registro.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="${editar}('${registro.id}')">Editar</button> <button class="btn btn-soft btn-sm" data-legacy-click="${archivar}('${registro.id}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarRegistroPecuario('${tipo}','${registro.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('${config.tabla}','${registro.id}','este ${descripcion}')">Eliminar</button></td></tr>`;
   });
 }
 
@@ -515,6 +537,11 @@ export const editarProduccionAnimal = (id) => editarRegistroPecuario("produccion
 export async function archivarRegistroPecuario(tipo, id) {
   const config = configuracionRegistrosPecuarios[tipo];
   if (await archivarRegistro(config.tabla, id, config.descripcion)) await cargarRegistrosPecuarios(tipo);
+}
+
+export async function reactivarRegistroPecuario(tipo, id) {
+  const config = configuracionRegistrosPecuarios[tipo];
+  if (await reactivarRegistro(config.tabla, id, config.descripcion)) await cargarRegistrosPecuarios(tipo);
 }
 
 export const archivarEventoSanitario = (id) => archivarRegistroPecuario("eventoSanitario", id);

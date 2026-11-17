@@ -319,6 +319,46 @@ a {
   padding-left: 10px;
 }
 
+.user-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-action {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(223, 244, 230, 0.16);
+  border-radius: 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.055);
+  cursor: pointer;
+}
+
+.profile-action:hover {
+  color: #c7f0d0;
+  background: rgba(117, 185, 134, 0.16);
+}
+
+.profile-action svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /**
  * .avatar
  * Círculo con las iniciales del usuario cuando no hay foto.
@@ -1327,13 +1367,56 @@ html[data-theme="light"] .chart-period option {
  */
 .modal-box {
   width: min(760px, 100%); /* máximo 760px, 100% en pantallas pequeñas */
-  max-height: 90vh;
+  max-height: min(90vh, 90dvh);
   overflow: auto;
+  overscroll-behavior: contain;
   background: linear-gradient(145deg, rgba(25, 43, 35, 0.97), rgba(13, 28, 23, 0.97));
   border: 1px solid rgba(223, 244, 230, 0.16);
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+}
+
+/* El formulario de movimientos cabe completo: compactamos campos y usamos
+   todo el ancho para los datos de finca, lote y cultivo. */
+#modalMovimiento .modal-box {
+  width: min(960px, 100%);
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  padding: 18px 22px;
+}
+
+#modalMovimiento .modal-head {
+  margin-bottom: 10px;
+}
+
+#modalMovimiento .form-grid {
+  gap: 10px 14px;
+}
+
+#mov-uso-fields {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+#mov-uso-fields[hidden] {
+  display: none !important;
+}
+
+#mov-uso-fields textarea {
+  min-height: 58px;
+  padding-block: 7px;
+}
+
+#modalMovimiento .field input,
+#modalMovimiento .field select {
+  min-height: 38px;
+  padding-block: 7px;
+}
+
+#modalMovimiento .form-actions {
+  margin-top: 12px;
 }
 
 /**
@@ -1704,6 +1787,14 @@ html[data-theme="light"] .chart-period option {
   .module-grid,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  #modalMovimiento .modal-box {
+    padding: 14px;
+  }
+
+  #mov-uso-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   /* KPIs en 2 columnas (no caben 4 en móvil) */
@@ -2324,7 +2415,7 @@ html[data-theme="dark"] .settings-theme-field select {
   inset: auto;
   top: 10px;
   z-index: 40;
-  width: 700px;
+  width: max-content;
   max-width: calc(100% - 32px);
   height: 76px;
   margin: 10px auto 12px;
@@ -2349,7 +2440,7 @@ html[data-theme="dark"] .settings-theme-field select {
   animation: none;
   transition: background 240ms ease, box-shadow 240ms ease;
 }
-#app .sidebar { transform: translateX(-48px); }
+#app .sidebar { transform: none; }
 #app .sidebar::-webkit-scrollbar { display: none; }
 #app .sidebar:hover { box-shadow: 0 16px 42px rgba(0, 0, 0, 0.26), inset 0 1px rgba(255, 255, 255, 0.1); }
 #app .sidebar .brand {
@@ -2484,11 +2575,13 @@ html[data-theme="dark"] .settings-theme-field select {
 #app .content { padding-top: 20px; }
 #app .topbar {
   position: fixed;
-  top: 10px;
+  top: 18px;
   left: 16px;
   right: 16px;
   z-index: 39;
-  height: 76px;
+  height: auto;
+  min-height: 58px;
+  align-items: flex-start;
   padding: 0;
   border: 0;
   background: transparent;
@@ -2499,6 +2592,7 @@ html[data-theme="dark"] .settings-theme-field select {
 }
 #app .topbar > div:first-child,
 #app .topbar .top-actions {
+  align-self: flex-start;
   min-height: 58px;
   border: 1px solid rgba(223, 244, 230, 0.2);
   border-radius: 22px;
@@ -2514,10 +2608,31 @@ html[data-theme="dark"] .settings-theme-field select {
 #app .topbar .top-actions { padding: 7px 10px; gap: 8px; }
 #app .topbar .user { margin-left: 2px; }
 #app .topbar .icon-btn { border-radius: 50%; }
+#app .topbar .icon-btn[aria-label="Configurar alertas"] { display: none; }
+#app .topbar .user {
+  min-width: 154px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  margin-left: 2px;
+  padding: 7px 9px;
+  border: 1px solid rgba(223, 244, 230, 0.16);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.045);
+}
+#app .topbar .user-identity { min-width: 0; }
+#app .topbar .profile-actions {
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px solid rgba(223, 244, 230, 0.13);
+}
+#sidebar .nav-item[data-page="configuracion"],
+#sidebar .nav-item[data-legacy-click="logout()"],
+#sidebar .nav-title:has(+ .nav-item[data-page="configuracion"]) { display: none; }
 #app .mobile-menu { display: none; }
 
 @media (max-width: 760px) {
-  #app .sidebar { top: 6px; width: 700px; max-width: calc(100% - 16px); height: 66px; margin: 6px auto 8px; padding: 7px 9px; border-radius: 22px; }
+  #app .sidebar { top: 6px; width: max-content; max-width: calc(100% - 16px); height: 66px; margin: 6px auto 8px; padding: 7px 9px; border-radius: 22px; }
   #app .sidebar { transform: none; }
   #app .sidebar .brand { flex-basis: 42px; width: 42px; height: 44px; margin-right: 3px; }
   #app .sidebar .brand-mark { width: 36px; height: 36px; flex-basis: 36px; }
@@ -2528,13 +2643,17 @@ html[data-theme="dark"] .settings-theme-field select {
   #app .sidebar .nav-item:hover span:not(.ico),
   #app .sidebar .nav-item:focus-visible span:not(.ico) { max-width: min(180px, calc(100vw - 90px)); }
   #app .main { padding-top: 48px; }
-  #app .topbar { top: 78px; left: 8px; right: 8px; height: 52px; }
+  #app .topbar { top: 78px; left: 8px; right: 8px; height: auto; min-height: 52px; }
   #app .topbar > div:first-child,
   #app .topbar .top-actions { min-height: 48px; border-radius: 18px; }
   #app .topbar > div:first-child { padding: 0 10px; }
   #app .topbar .top-actions { padding: 4px 6px; gap: 4px; }
-  #app .topbar .user { padding-left: 2px; gap: 5px; }
-  #app .topbar .user > div:last-child { display: none; }
+  #app .topbar .user { min-width: 112px; padding: 5px 6px; gap: 5px; }
+  #app .topbar .user-identity { justify-content: center; }
+  #app .topbar .user-identity > div:last-child { display: none; }
+  #app .topbar .user > .profile-actions { display: flex; }
+  #app .topbar .profile-actions { padding-top: 4px; }
+  #app .topbar .profile-action { width: 30px; height: 28px; }
   #app .topbar .icon-btn { width: 36px; height: 36px; }
   #app .mobile-menu { display: none !important; }
 }

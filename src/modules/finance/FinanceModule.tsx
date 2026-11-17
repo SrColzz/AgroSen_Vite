@@ -1,6 +1,10 @@
 import { Icon } from "../../shared/Icon";
 
 export function FinanceModule() {
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const inicioGrafica = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
+  const mesInicialGrafica = `${inicioGrafica.getFullYear()}-${String(inicioGrafica.getMonth() + 1).padStart(2, "0")}`;
   return (
     <>
       <div className="page-head">
@@ -23,7 +27,7 @@ export function FinanceModule() {
 
       <div className="grid dashboard-grid" style={{ marginTop: 18 }}>
         <div className="card">
-          <div className="card-head"><h2>Flujo de caja</h2><span>mensual</span></div>
+          <div className="card-head"><div><h2>Flujo de caja</h2><span>Rango del gráfico</span></div><div className="toolbar"><label className="field"><span>Desde</span><input id="finance-chart-from" type="month" defaultValue={mesInicialGrafica} data-legacy-change="cargarMovimientosFinancieros()" /></label><label className="field"><span>Hasta</span><input id="finance-chart-to" type="month" defaultValue={mesActual} data-legacy-change="cargarMovimientosFinancieros()" /></label></div></div>
           <div className="chart-box"><canvas id="financeChart" /></div>
         </div>
         <div className="card">
@@ -33,7 +37,7 @@ export function FinanceModule() {
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>
-        <div className="card-head"><h2>Movimientos financieros</h2><span>Registros activos</span></div>
+        <div className="card-head"><div><h2>Movimientos financieros</h2><span>Registros del mes seleccionado</span></div><label className="field"><span>Mes</span><input id="finance-selected-month" type="month" defaultValue={mesActual} data-legacy-change="cargarMovimientosFinancieros()" /></label></div>
         <div className="table-wrap">
           <table className="table" id="movimientosFinancierosTable">
             <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Concepto</th><th>Finca</th><th>Valor</th><th>Acciones</th></tr></thead>

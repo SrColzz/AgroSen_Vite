@@ -52,6 +52,14 @@ export function AgriculturalModule() {
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>
+        <div className="card-head"><h2>Cultivos cerrados o inactivos</h2><span>Se pueden activar nuevamente</span></div>
+        <div className="table-wrap"><table className="table" id="cultivosInactivosTable">
+          <thead><tr><th>Cultivo</th><th>Variedad</th><th>Lote</th><th>Siembra</th><th>Cosecha estimada</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody><tr><td className="empty" colSpan={7}>No hay cultivos cerrados o inactivos.</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <div className="card" style={{ marginTop: 18 }}>
         <div className="card-head"><h2>Labores culturales</h2><button className="btn btn-soft btn-sm" data-legacy-click="openModal('modalLabor')">Registrar labor</button></div>
         <div className="table-wrap"><table className="table" id="laboresTable">
           <thead><tr><th>Fecha</th><th>Actividad</th><th>Cultivo</th><th>Lote</th><th>Insumo</th><th>Acciones</th></tr></thead>

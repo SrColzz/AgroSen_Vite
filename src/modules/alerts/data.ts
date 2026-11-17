@@ -36,3 +36,14 @@ export async function cambiarEstadoAlerta(id: string, estado: "vista" | "resuelt
   showToast(estado === "resuelta" ? "Alerta resuelta." : "Alerta marcada como vista.");
   return true;
 }
+
+export async function eliminarAlerta(id: string): Promise<boolean> {
+  const { data, error } = await supabase.from("alertas").delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
+    console.error("No se pudo eliminar la alerta:", error);
+    showToast("No se pudo eliminar la alerta.");
+    return false;
+  }
+  showToast("Alerta eliminada permanentemente.");
+  return true;
+}

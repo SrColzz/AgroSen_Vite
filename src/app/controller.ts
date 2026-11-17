@@ -2,11 +2,11 @@ import { supabase } from "../lib/supabase";
 import { cargarDashboard, initFinanceChart, initProductionChart, updateChart } from "../modules/dashboard";
 import { calculateHarvest, escapeHtml, fechaLocalActual, filterTable, formatDate, renderTable, showToast, updateBadgeNotif, updateKpi, validateArea } from "../shared/dom";
 import { appState } from "../shared/state";
-import { actualizarDetalleRazaAnimal, archivarAnimal, archivarEventoSanitario, archivarPesaje, archivarProduccionAnimal, cargarAnimales, cargarAnimalesEnSelector, cargarEspeciesAnimal, cargarEventosSanitarios, cargarLotesAnimal, cargarPesajes, cargarProduccionesAnimales, cargarRazasAnimal, editarAnimal, editarEventoSanitario, editarPesaje, editarProduccionAnimal, exportarAnimalesCSV, guardarAnimal, guardarEventoSanitario, guardarPesaje, guardarProduccionAnimal } from "../modules/livestock";
-import { actualizarFormularioMovimiento, actualizarUbicacionProductoInventario, actualizarUnidadProductoLabor, anularMovimientoInventario, archivarProducto, asegurarProductoEnSelector, cargarCultivosUsoInventario, cargarFincasProducto, cargarInventario, cargarLotesProducto, cargarLotesUsoInventario, cargarProductosEnSelector, cargarResponsableUsoInventario, editarProducto, guardarMovimientoInventario, guardarProducto } from "../modules/inventory";
-import { archivarCultivo, archivarFinca, archivarTipoCultivo, anularCosecha, anularLabor, asegurarLoteEnSelector, cargarCatalogoCultivos, cargarCosechas, cargarCultivos, cargarCultivosDelLote, cargarFincas, cargarLabores, cargarReferenciasAgricolas, editarCosecha, editarCultivo, editarFinca, editarLabor, editarTipoCultivo, guardarCosecha, guardarLabor, guardarTipoCultivo, loadLotesEnSelect, renderLoteFields, saveCultivo, saveFinca, seleccionarCultivoCatalogo } from "../modules/agricultural";
-import { archivarMovimientoFinanciero, cargarFincasFinancieras, cargarMovimientosFinancieros, editarMovimientoFinanciero, guardarMovimientoFinanciero } from "../modules/finance/data";
-import { archivarEmpleado, cargarDatosRRHH, cargarEmpleadosEnSelectores, cargarFincasEmpleados, editarEmpleado, guardarAsistencia, guardarEmpleado, guardarNomina } from "../modules/hr/data";
+import { actualizarDetalleRazaAnimal, archivarAnimal, eliminarAnimal, reactivarAnimal, reactivarRegistroPecuario, archivarEventoSanitario, archivarPesaje, archivarProduccionAnimal, cargarAnimales, cargarAnimalesEnSelector, cargarEspeciesAnimal, cargarEventosSanitarios, cargarLotesAnimal, cargarPesajes, cargarProduccionesAnimales, cargarRazasAnimal, editarAnimal, editarEventoSanitario, editarPesaje, editarProduccionAnimal, exportarAnimalesCSV, guardarAnimal, guardarEventoSanitario, guardarPesaje, guardarProduccionAnimal } from "../modules/livestock";
+import { actualizarFormularioMovimiento, actualizarUbicacionProductoInventario, actualizarUnidadProductoLabor, anularMovimientoInventario, eliminarMovimientoInventario, eliminarProducto, archivarProducto, reactivarProducto, asegurarProductoEnSelector, cargarCultivosUsoInventario, cargarFincasProducto, cargarFincasUsoInventario, cargarInventario, cargarLotesProducto, cargarLotesUsoInventario, cargarProductosEnSelector, cargarResponsableUsoInventario, editarProducto, guardarMovimientoInventario, guardarProducto } from "../modules/inventory";
+import { archivarCultivo, reactivarCultivo, archivarFinca, reactivarFinca, archivarLote, reactivarLote, eliminarLote, archivarTipoCultivo, reactivarTipoCultivo, anularCosecha, anularLabor, asegurarLoteEnSelector, cargarCatalogoCultivos, cargarCosechas, cargarCultivos, cargarCultivosDelLote, cargarFincas, cargarLabores, cargarReferenciasAgricolas, editarCosecha, editarCultivo, editarFinca, editarLabor, editarTipoCultivo, guardarCosecha, guardarLabor, guardarTipoCultivo, loadLotesEnSelect, renderLoteFields, saveCultivo, saveFinca, seleccionarCultivoCatalogo } from "../modules/agricultural";
+import { archivarMovimientoFinanciero, reactivarMovimientoFinanciero, eliminarMovimientoFinanciero, cargarFincasFinancieras, cargarMovimientosFinancieros, editarMovimientoFinanciero, guardarMovimientoFinanciero } from "../modules/finance/data";
+import { archivarEmpleado, reactivarEmpleado, eliminarRegistroRRHH, cargarDatosRRHH, cargarEmpleadosEnSelectores, cargarFincasEmpleados, editarEmpleado, guardarAsistencia, guardarEmpleado, guardarNomina } from "../modules/hr/data";
 
 const doc: any = window.document;
 const arrayFrom: any = Array.from;
@@ -254,7 +254,7 @@ export async function openModal(id) {
     doc.getElementById("mov-uso-lote").replaceChildren(new Option("Selecciona primero una finca", ""));
     doc.getElementById("mov-uso-cultivo").replaceChildren(new Option("Selecciona primero un lote", ""));
     actualizarFormularioMovimiento();
-    await Promise.all([cargarProductosEnSelector("mov-producto"), cargarResponsableUsoInventario()]);
+    await Promise.all([cargarProductosEnSelector("mov-producto"), cargarFincasUsoInventario(), cargarResponsableUsoInventario()]);
   }
   if (id === "modalGasto" || id === "modalIngreso") {
     const prefijo = id === "modalIngreso" ? "ing" : "gasto";
@@ -275,6 +275,7 @@ export async function openModal(id) {
       if (input) input.value = "";
     });
     doc.getElementById("emp-contrato").selectedIndex = 0;
+    doc.getElementById("emp-periodicidad").value = "Mensual";
     await cargarFincasEmpleados();
   }
   if (id === "modalAsistencia" || id === "modalNomina") {
@@ -415,6 +416,44 @@ export async function archivarRegistro(tabla, id, descripcion) {
   return true;
 }
 
+export async function reactivarRegistro(tabla, id, descripcion) {
+  const { data, error } = await supabase.from(tabla).update({ activo: true }).eq("id", id).select("id");
+  if (error || !data?.length) {
+    console.error(`No se pudo reactivar ${descripcion}:`, error);
+    showToast("No se pudo reactivar el registro.");
+    return false;
+  }
+  showToast("Registro activado nuevamente.");
+  return true;
+}
+
+export async function eliminarRegistroPermanente(tabla, id, descripcion) {
+  if (!window.confirm(`¿Eliminar permanentemente ${descripcion}? Esta acción no se puede deshacer y el registro dejará de aparecer en el historial.`)) return false;
+  const { data, error } = await supabase.from(tabla).delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
+    console.error(`No se pudo eliminar ${descripcion}:`, error);
+    showToast(error?.code === "23503"
+      ? "No se puede eliminar porque otros registros dependen de este elemento. Elimina primero esos registros vinculados."
+      : "No se pudo eliminar. Revisa los permisos de Supabase.");
+    return false;
+  }
+
+  showToast("Registro eliminado permanentemente.");
+  if (["fincas", "lotes"].includes(tabla)) { await cargarFincas(); await cargarCultivos(); }
+  if (["tipos_cultivo", "cultivos"].includes(tabla)) { await cargarCatalogoCultivos(); await cargarCultivos(); }
+  if (["labores_culturales"].includes(tabla)) await cargarLabores();
+  if (["cosechas"].includes(tabla)) await cargarCosechas();
+  if (["productos", "movimientos_inventario"].includes(tabla)) await cargarInventario();
+  if (["animales"].includes(tabla)) await cargarAnimales();
+  if (["eventos_sanitarios"].includes(tabla)) await cargarEventosSanitarios();
+  if (["pesajes"].includes(tabla)) await cargarPesajes();
+  if (["producciones_animal"].includes(tabla)) await cargarProduccionesAnimales();
+  if (["movimientos_financieros"].includes(tabla)) await cargarMovimientosFinancieros();
+  if (["empleados", "asistencia", "nomina"].includes(tabla)) await cargarDatosRRHH();
+  await cargarDashboard();
+  return true;
+}
+
 export async function initializeLegacyApp() {
   // Compatibilidad con botones inline que aún puedan estar presentes en el DOM
   // por una sesión de Vite/HMR iniciada antes de migrar el inventario.
@@ -425,14 +464,20 @@ export async function initializeLegacyApp() {
 
 // Acciones del HTML legado expuestas como API del módulo, sin variables globales.
 export const legacyActions = {
-  actualizarDetalleRazaAnimal, actualizarFormularioMovimiento, actualizarUbicacionProductoInventario, actualizarUnidadProductoLabor, anularMovimientoInventario, archivarProducto, calculateHarvest,
+  actualizarDetalleRazaAnimal, actualizarFormularioMovimiento, actualizarUbicacionProductoInventario, actualizarUnidadProductoLabor, anularMovimientoInventario, eliminarMovimientoInventario, eliminarProducto, archivarProducto, reactivarProducto, calculateHarvest,
+  reactivarRegistro,
+  eliminarRegistroPermanente,
   cambiarTema, cargarCultivosDelLote, cargarCultivosUsoInventario, cargarInventario, cargarLotesProducto, cargarLotesUsoInventario, cargarRazasAnimal,
   closeModals, exportarAnimalesCSV, filterTable, guardarAnimal, guardarCosecha,
   guardarEventoSanitario, guardarLabor, guardarMovimientoInventario, guardarPesaje,
+  editarAnimal, archivarAnimal, reactivarAnimal, eliminarAnimal, reactivarRegistroPecuario, editarEventoSanitario, archivarEventoSanitario,
+  editarPesaje, archivarPesaje, editarProduccionAnimal, archivarProduccionAnimal,
+  editarTipoCultivo, archivarTipoCultivo, reactivarTipoCultivo, editarFinca, archivarFinca, reactivarFinca, archivarLote, reactivarLote, eliminarLote,
+  editarCultivo, archivarCultivo, reactivarCultivo, editarLabor, anularLabor, editarCosecha, anularCosecha,
   editarProducto, guardarProduccionAnimal, guardarProducto, guardarTipoCultivo, logout, openModal, cargarResponsableUsoInventario,
-  archivarMovimientoFinanciero, cargarMovimientosFinancieros, editarMovimientoFinanciero,
+  archivarMovimientoFinanciero, reactivarMovimientoFinanciero, eliminarMovimientoFinanciero, cargarMovimientosFinancieros, editarMovimientoFinanciero,
   guardarMovimientoFinanciero,
-  archivarEmpleado, cargarDatosRRHH, editarEmpleado, guardarAsistencia, guardarEmpleado, guardarNomina,
+  archivarEmpleado, reactivarEmpleado, eliminarRegistroRRHH, cargarDatosRRHH, editarEmpleado, guardarAsistencia, guardarEmpleado, guardarNomina,
   renderLoteFields, saveCultivo, saveFinca, saveForm, seleccionarCultivoCatalogo,
   showPage, showToast, toggleSidebar, updateChart, validateArea,
 };

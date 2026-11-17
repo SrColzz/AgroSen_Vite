@@ -13,6 +13,7 @@ type MovimientoFinanciero = {
   descripcion: string;
   tercero: string | null;
   finca_id: string | null;
+  activo: boolean;
 };
 
 type Finca = { id: string; nombre: string };
@@ -46,8 +47,8 @@ export async function cargarFincasFinancieras(): Promise<void> {
 export async function cargarMovimientosFinancieros(): Promise<void> {
   const [{ data, error }, { data: fincasData, error: errorFincas }] = await Promise.all([
     supabase.from("movimientos_financieros")
-      .select("id, tipo, categoria, monto, fecha, descripcion, tercero, finca_id")
-      .eq("activo", true).order("fecha", { ascending: false }).limit(2000),
+      .select("id, tipo, categoria, monto, fecha, descripcion, tercero, finca_id, activo")
+      .order("fecha", { ascending: false }).limit(5000),
     supabase.from("fincas").select("id, nombre"),
   ]);
 
@@ -63,8 +64,9 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   fincas = fincasData || fincas;
   movimientos = data || [];
 
-  const mesActual = fechaLocalActual().slice(0, 7);
-  const movimientosMes = movimientos.filter((movimiento) => movimiento.fecha?.startsWith(mesActual));
+  const mesSeleccionado = (doc.getElementById("finance-selected-month") as HTMLInputElement | null)?.value || fechaLocalActual().slice(0, 7);
+  const movimientosMes = movimientos.filter((movimiento) => movimiento.activo && movimiento.fecha?.startsWith(mesSeleccionado));
+  const movimientosVisiblesMes = movimientos.filter((movimiento) => movimiento.fecha?.startsWith(mesSeleccionado));
   const ingresos = movimientosMes.filter((movimiento) => movimiento.tipo === "Ingreso").reduce((suma, movimiento) => suma + Number(movimiento.monto), 0);
   const egresos = movimientosMes.filter((movimiento) => movimiento.tipo === "Egreso").reduce((suma, movimiento) => suma + Number(movimiento.monto), 0);
   updateKpi("kpi-ingresos", moneda(ingresos));
@@ -72,15 +74,32 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   updateKpi("kpi-rentabilidad", moneda(ingresos - egresos));
   updateKpi("kpi-cuentas", movimientosMes.length);
 
+  let desde = (doc.getElementById("finance-chart-from") as HTMLInputElement | null)?.value || "";
+  let hasta = (doc.getElementById("finance-chart-to") as HTMLInputElement | null)?.value || "";
+  const mesHoy = fechaLocalActual().slice(0, 7);
+  if (!desde || !hasta) {
+    const fechaInicio = new Date(`${mesHoy}-01T00:00:00`);
+    fechaInicio.setMonth(fechaInicio.getMonth() - 11);
+    desde ||= `${fechaInicio.getFullYear()}-${String(fechaInicio.getMonth() + 1).padStart(2, "0")}`;
+    hasta ||= mesHoy;
+  }
+  if (desde > hasta) {
+    showToast("El mes inicial del flujo de caja no puede ser posterior al mes final.");
+    desde = hasta;
+    const inputDesde = doc.getElementById("finance-chart-from") as HTMLInputElement | null;
+    if (inputDesde) inputDesde.value = hasta;
+  }
   const clavesMeses: string[] = [];
-  const cursor = new Date(`${mesActual}-01T00:00:00`);
-  cursor.setMonth(cursor.getMonth() - 11);
-  for (let index = 0; index < 12; index += 1) {
-    clavesMeses.push(cursor.toISOString().slice(0, 7));
+  const [yearInicio, monthInicio] = desde.split("-").map(Number);
+  const [yearFin, monthFin] = hasta.split("-").map(Number);
+  const cursor = new Date(yearInicio, monthInicio - 1, 1);
+  const fechaFin = new Date(yearFin, monthFin - 1, 1);
+  while (cursor <= fechaFin && clavesMeses.length < 60) {
+    clavesMeses.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
     cursor.setMonth(cursor.getMonth() + 1);
   }
   const totales = new Map(clavesMeses.map((clave) => [clave, { ingresos: 0, egresos: 0 }]));
-  movimientos.forEach((movimiento) => {
+  movimientos.filter((movimiento) => movimiento.activo).forEach((movimiento) => {
     const total = totales.get(movimiento.fecha?.slice(0, 7));
     if (!total) return;
     total[movimiento.tipo === "Ingreso" ? "ingresos" : "egresos"] += Number(movimiento.monto);
@@ -89,7 +108,7 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   updateFinanceChart(labels, clavesMeses.map((clave) => totales.get(clave)?.ingresos || 0), clavesMeses.map((clave) => totales.get(clave)?.egresos || 0));
 
   const fincasPorId = new Map(fincas.map((finca) => [finca.id, finca.nombre]));
-  renderTable("movimientosFinancierosTable", movimientos, (movimiento) => `
+  renderTable("movimientosFinancierosTable", movimientosVisiblesMes, (movimiento) => `
     <tr>
       <td>${escapeHtml(formatDate(movimiento.fecha))}</td>
       <td><span class="status ${movimiento.tipo === "Ingreso" ? "ok" : "warn"}">${escapeHtml(movimiento.tipo)}</span></td>
@@ -98,8 +117,7 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
       <td>${escapeHtml(movimiento.finca_id ? fincasPorId.get(movimiento.finca_id) || "Finca" : "General")}</td>
       <td>${escapeHtml(moneda(Number(movimiento.monto)))}</td>
       <td><div class="table-actions">
-        <button class="btn btn-soft btn-sm" data-legacy-click="editarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Editar</button>
-        <button class="btn btn-danger btn-sm" data-legacy-click="archivarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Archivar</button>
+        ${movimiento.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="editarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Editar</button><button class="btn btn-danger btn-sm" data-legacy-click="archivarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Activar</button>`}<button class="btn btn-danger btn-sm" data-legacy-click="eliminarMovimientoFinanciero('${escapeHtml(movimiento.id)}')">Eliminar</button>
       </div></td>
     </tr>`);
 }
@@ -163,6 +181,27 @@ export async function archivarMovimientoFinanciero(id: string): Promise<void> {
     return;
   }
   showToast("Movimiento archivado; se conservó en el historial.");
+  await cargarMovimientosFinancieros();
+}
+
+export async function reactivarMovimientoFinanciero(id: string): Promise<void> {
+  const { data, error } = await supabase.from("movimientos_financieros").update({ activo: true }).eq("id", id).select("id").maybeSingle();
+  if (error || !data) { console.error("No se pudo reactivar el movimiento financiero:", error); showToast("No se pudo activar el movimiento."); return; }
+  showToast("Movimiento financiero activado nuevamente.");
+  await cargarMovimientosFinancieros();
+}
+
+export async function eliminarMovimientoFinanciero(id: string): Promise<void> {
+  if (!window.confirm("¿Eliminar permanentemente este movimiento financiero? Esta acción no se puede deshacer.")) return;
+  const { error } = await supabase.rpc("eliminar_movimiento_financiero", { p_id_movimiento: id });
+  if (error) {
+    console.error("No se pudo eliminar el movimiento financiero:", error);
+    showToast(error.code === "PGRST202"
+      ? "Falta ejecutar eliminar_movimiento_financiero_supabase.sql en Supabase."
+      : `No se pudo eliminar el movimiento financiero: ${error.message}`);
+    return;
+  }
+  showToast("Movimiento financiero eliminado permanentemente.");
   await cargarMovimientosFinancieros();
 }
 

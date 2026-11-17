@@ -9,7 +9,7 @@ window.addEventListener("agrosen:preferences-updated", () => { void cargarDatosR
 
 export async function cargarDatosRRHH(): Promise<void> {
   const [empleadosResult, asistenciaResult, nominaResult] = await Promise.all([
-    supabase.from("empleados").select("id, finca_id, nombre, identificacion, cargo, salario, fecha_ingreso, tipo_contrato, estado")
+    supabase.from("empleados").select("id, finca_id, nombre, identificacion, cargo, salario, periodicidad_pago, fecha_ingreso, tipo_contrato, estado")
       .order("nombre"),
     supabase.from("asistencia").select("id, empleado_id, fecha, hora_entrada, hora_salida, estado")
       .order("fecha", { ascending: false }).limit(100),
@@ -31,11 +31,12 @@ export async function cargarDatosRRHH(): Promise<void> {
   renderTable("empleadosTable", empleados, (empleado) => `
     <tr>
       <td>${escapeHtml(empleado.nombre)}</td><td>${escapeHtml(empleado.identificacion)}</td>
-      <td>${escapeHtml(empleado.cargo)}</td><td>${escapeHtml(moneda(Number(empleado.salario)))}</td>
+      <td>${escapeHtml(empleado.cargo)}</td><td>${escapeHtml(moneda(Number(empleado.salario)))}</td><td>${escapeHtml(empleado.periodicidad_pago || "Mensual")}</td>
       <td>${escapeHtml(formatDate(empleado.fecha_ingreso))}</td><td>${escapeHtml(empleado.estado)}</td>
       <td><div class="table-actions">
         <button class="btn btn-soft btn-sm" data-legacy-click="editarEmpleado('${escapeHtml(empleado.id)}')">Editar</button>
-        ${empleado.estado === "Activo" ? `<button class="btn btn-danger btn-sm" data-legacy-click="archivarEmpleado('${escapeHtml(empleado.id)}')">Desactivar</button>` : ""}
+        ${empleado.estado === "Activo" ? `<button class="btn btn-danger btn-sm" data-legacy-click="archivarEmpleado('${escapeHtml(empleado.id)}')">Desactivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarEmpleado('${escapeHtml(empleado.id)}')">Activar</button>`}
+        <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroRRHH('empleados','${escapeHtml(empleado.id)}')">Eliminar</button>
       </div></td>
     </tr>`);
 
@@ -45,7 +46,7 @@ export async function cargarDatosRRHH(): Promise<void> {
   } else {
     renderTable("asistenciaTable", asistenciaResult.data, (registro) => `
       <tr><td>${escapeHtml(formatDate(registro.fecha))}</td><td>${escapeHtml(nombres.get(registro.empleado_id) || "Empleado")}</td>
-      <td>${escapeHtml(registro.hora_entrada || "—")}</td><td>${escapeHtml(registro.hora_salida || "—")}</td><td>${escapeHtml(registro.estado)}</td></tr>`);
+      <td>${escapeHtml(registro.hora_entrada || "—")}</td><td>${escapeHtml(registro.hora_salida || "—")}</td><td>${escapeHtml(registro.estado)}</td><td><button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroRRHH('asistencia','${escapeHtml(registro.id)}')">Eliminar</button></td></tr>`);
     const hoy = asistenciaResult.data.filter((registro) => registro.fecha === fechaLocalActual());
     const presentes = hoy.filter((registro) => registro.estado === "Presente").length;
     const resumen = doc.getElementById("rrhh-asistencia");
@@ -59,7 +60,7 @@ export async function cargarDatosRRHH(): Promise<void> {
     renderTable("nominaTable", nominaResult.data, (registro) => `
       <tr><td>${escapeHtml(registro.periodo)}</td><td>${escapeHtml(nombres.get(registro.empleado_id) || "Empleado")}</td>
       <td>${escapeHtml(moneda(Number(registro.salario_base)))}</td><td>${escapeHtml(moneda(Number(registro.deducciones)))}</td>
-      <td>${escapeHtml(moneda(Number(registro.total_pagado)))}</td><td>${escapeHtml(formatDate(registro.fecha_pago))}</td></tr>`);
+      <td>${escapeHtml(moneda(Number(registro.total_pagado)))}</td><td>${escapeHtml(formatDate(registro.fecha_pago))}</td><td><button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroRRHH('nomina','${escapeHtml(registro.id)}')">Eliminar</button></td></tr>`);
   }
 }
 
@@ -98,6 +99,7 @@ export async function guardarEmpleado(): Promise<void> {
     identificacion: value("emp-identificacion"),
     cargo: value("emp-cargo"),
     salario: Number(value("emp-salario")),
+    periodicidad_pago: value("emp-periodicidad"),
     fecha_ingreso: value("emp-fecha-ingreso"),
     tipo_contrato: value("emp-contrato"),
     finca_id: value("emp-finca") || null,
@@ -108,6 +110,16 @@ export async function guardarEmpleado(): Promise<void> {
     return;
   }
   const editando = appState.registroEnEdicion?.tipo === "empleado";
+  const consultaDuplicado = await supabase.from("empleados").select("id").eq("identificacion", empleado.identificacion).limit(1);
+  if (consultaDuplicado.error) {
+    console.error("No se pudo comprobar la identificación del empleado:", consultaDuplicado.error);
+    showToast("No se pudo validar si la identificación ya está registrada.");
+    return;
+  }
+  if (consultaDuplicado.data?.some((item) => item.id !== (editando ? appState.registroEnEdicion.id : null))) {
+    showToast("Ya existe un empleado con esa identificación.");
+    return;
+  }
   const resultado = editando
     ? await supabase.from("empleados").update(empleado).eq("id", appState.registroEnEdicion.id).select("id").maybeSingle()
     : await supabase.from("empleados").insert(empleado).select("id").single();
@@ -122,7 +134,7 @@ export async function guardarEmpleado(): Promise<void> {
 }
 
 export async function editarEmpleado(id: string): Promise<void> {
-  const { data, error } = await supabase.from("empleados").select("id, finca_id, nombre, identificacion, cargo, salario, fecha_ingreso, tipo_contrato, estado").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("empleados").select("id, finca_id, nombre, identificacion, cargo, salario, periodicidad_pago, fecha_ingreso, tipo_contrato, estado").eq("id", id).maybeSingle();
   if (error || !data) {
     showToast("No se encontró el empleado que quieres editar.");
     return;
@@ -134,6 +146,7 @@ export async function editarEmpleado(id: string): Promise<void> {
   setValue("emp-identificacion", data.identificacion);
   setValue("emp-cargo", data.cargo);
   setValue("emp-salario", data.salario);
+  setValue("emp-periodicidad", data.periodicidad_pago || "Mensual");
   setValue("emp-fecha-ingreso", data.fecha_ingreso);
   setValue("emp-contrato", data.tipo_contrato);
   setValue("emp-finca", data.finca_id || "");
@@ -141,14 +154,41 @@ export async function editarEmpleado(id: string): Promise<void> {
 
 export async function archivarEmpleado(id: string): Promise<void> {
   if (!window.confirm("¿Quieres desactivar este empleado? Su historial se conservará.")) return;
-  const { error } = await supabase.from("empleados").update({ estado: "Inactivo" }).eq("id", id);
-  if (error) {
+  const { data, error } = await supabase.from("empleados").update({ estado: "Inactivo" }).eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
     console.error("No se pudo desactivar el empleado:", error);
     showToast("No se pudo desactivar el empleado.");
     return;
   }
   showToast("Empleado desactivado; su historial se conservó.");
   await cargarDatosRRHH();
+}
+
+export async function reactivarEmpleado(id: string): Promise<void> {
+  const { data, error } = await supabase.from("empleados").update({ estado: "Activo" }).eq("id", id).select("id").maybeSingle();
+  if (error || !data) { console.error("No se pudo reactivar el empleado:", error); showToast("No se pudo activar el empleado."); return; }
+  showToast("Empleado activado nuevamente.");
+  await cargarDatosRRHH();
+}
+
+export async function eliminarRegistroRRHH(tabla: "empleados" | "asistencia" | "nomina", id: string): Promise<void> {
+  const confirmacion = tabla === "empleados"
+    ? "¿Eliminar permanentemente este empleado y sus registros de asistencia y nómina? Esta acción no se puede deshacer."
+    : `¿Eliminar permanentemente este registro de ${tabla === "nomina" ? "nómina" : "asistencia"}? Esta acción no se puede deshacer.`;
+  if (!window.confirm(confirmacion)) return;
+
+  const { error } = await supabase.rpc("eliminar_registro_rrhh", { p_tabla: tabla, p_id: id });
+  if (error) {
+    console.error(`No se pudo eliminar el registro de RR. HH. (${tabla}):`, error);
+    showToast(error.code === "PGRST202"
+      ? "Falta ejecutar eliminar_registro_rrhh_supabase.sql en Supabase."
+      : `No se pudo eliminar el registro de RR. HH.: ${error.message}`);
+    return;
+  }
+  showToast(tabla === "empleados"
+    ? "Empleado y sus registros de asistencia y nómina eliminados permanentemente."
+    : "Registro eliminado permanentemente.");
+  await Promise.all([cargarDatosRRHH(), cargarEmpleadosEnSelectores()]);
 }
 
 export async function guardarAsistencia(): Promise<void> {

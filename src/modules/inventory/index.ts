@@ -7,6 +7,7 @@ import { formatCurrency, getCurrency, getStockWarningPercent } from "../../share
 const doc: any = document;
 const arrayFrom: any = Array.from;
 let inventoryChart: Chart | null = null;
+let inventoryCashflowChart: Chart | null = null;
 
 window.addEventListener("agrosen:preferences-updated", () => { void cargarInventario(); });
 window.addEventListener("agrosen:alert-preferences-updated", () => { void cargarInventario(); });
@@ -47,12 +48,86 @@ function actualizarGraficaInventario(productos: any[]) {
   inventoryChart.update();
 }
 
+function clavesMesesFlujo(meses: number): string[] {
+  const ahora = new Date();
+  return Array.from({ length: meses }, (_, index) => {
+    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - meses + index + 1, 1);
+    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+  });
+}
+
+function mesLocalMovimiento(fecha: string): string {
+  if (!fecha) return "";
+  if (!fecha.includes("T")) return fecha.slice(0, 7);
+  const valor = new Date(fecha);
+  if (Number.isNaN(valor.getTime())) return fecha.slice(0, 7);
+  return `${valor.getFullYear()}-${String(valor.getMonth() + 1).padStart(2, "0")}`;
+}
+
+async function actualizarGraficaFlujoCaja(productos: any[]) {
+  const canvas = doc.getElementById("inventoryCashflowChart");
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+  const rango = Number((doc.getElementById("inventory-cashflow-range") as HTMLSelectElement | null)?.value || 6);
+  const meses = rango === 3 || rango === 12 ? rango : 6;
+  const claves = clavesMesesFlujo(meses);
+  const [anioInicio, mesInicio] = claves[0].split("-").map(Number);
+  const fechaDesde = new Date(anioInicio, mesInicio - 1, 1).toISOString();
+  const fechaHasta = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString();
+  const movimientos: any[] = [];
+  const tamanoPagina = 1000;
+  for (let desde = 0; ; desde += tamanoPagina) {
+    const { data, error } = await supabase.from("movimientos_inventario")
+      .select("id,id_producto,tipo,cantidad,costo_unitario,fecha")
+      .eq("activo", true)
+      .gte("fecha", fechaDesde)
+      .lt("fecha", fechaHasta)
+      .order("fecha", { ascending: true })
+      .order("id", { ascending: true })
+      .range(desde, desde + tamanoPagina - 1);
+    if (error) {
+      console.error("No se pudieron cargar todos los movimientos para el flujo de inventario:", error);
+      showToast("No se pudo completar la gráfica de flujo de inventario.");
+      return;
+    }
+    movimientos.push(...(data || []));
+    if (!data || data.length < tamanoPagina) break;
+  }
+  const compras = new Map(claves.map((mes) => [mes, 0]));
+  const salidas = new Map(claves.map((mes) => [mes, 0]));
+  const costoPromedio = new Map(productos.map((producto) => [producto.id, Number(producto.costo_promedio) || 0]));
+  movimientos.forEach((movimiento) => {
+    const mes = mesLocalMovimiento(movimiento.fecha);
+    const costoGuardado = Number(movimiento.costo_unitario) || 0;
+    const promedio = costoPromedio.get(movimiento.id_producto) || 0;
+    const costo = movimiento.tipo === "Entrada" ? costoGuardado || promedio : promedio || costoGuardado;
+    const total = Number(movimiento.cantidad) * costo;
+    if (movimiento.tipo === "Entrada" && compras.has(mes)) compras.set(mes, (compras.get(mes) || 0) + total);
+    if (movimiento.tipo === "Salida" && salidas.has(mes)) salidas.set(mes, (salidas.get(mes) || 0) + total);
+  });
+  const labels = claves.map((mes) => new Date(`${mes}-01T00:00:00`).toLocaleDateString("es-CO", { month: "short", year: meses === 12 ? "2-digit" : undefined }));
+  if (!inventoryCashflowChart || inventoryCashflowChart.canvas !== canvas) {
+    inventoryCashflowChart?.destroy();
+    inventoryCashflowChart = new Chart(canvas, {
+      type: "line",
+      data: { labels, datasets: [
+        { label: "Compras", data: [...compras.values()], borderColor: "#2f855a", backgroundColor: "#2f855a", tension: 0.3 },
+        { label: "Salidas valorizadas", data: [...salidas.values()], borderColor: "#dd6b20", backgroundColor: "#dd6b20", tension: 0.3 },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" }, tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${formatCurrency(Number(context.parsed.y))}` } } }, scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatCurrency(Number(value), 0) } }, x: { grid: { display: false } } } },
+    });
+    return;
+  }
+  inventoryCashflowChart.data.labels = labels;
+  inventoryCashflowChart.data.datasets[0].data = [...compras.values()];
+  inventoryCashflowChart.data.datasets[1].data = [...salidas.values()];
+  inventoryCashflowChart.update();
+}
+
 export async function cargarInventario() {
   const categoria = doc.getElementById("inventario-filtro-categoria")?.value;
   const consultaProductos = supabase
     .from("productos")
     .select("id, nombre, categoria, unidad, stock, stock_minimo, costo_promedio, activo, id_finca, id_lote")
-    .eq("activo", true)
     .order("nombre", { ascending: true });
 
   const [respuestaProductos, respuestaMovimientos] = await Promise.all([
@@ -61,7 +136,7 @@ export async function cargarInventario() {
       .from("movimientos_inventario")
       .select("id, id_producto, tipo, cantidad, costo_unitario, proveedor, vencimiento, detalle, fecha, activo")
       .order("fecha", { ascending: false })
-      .limit(100),
+      .limit(5000),
   ]);
 
   if (respuestaProductos.error || respuestaMovimientos.error) {
@@ -125,6 +200,7 @@ export async function cargarInventario() {
   updateKpi("kpi-por-vencer", vencimientos.size);
   updateKpi("kpi-valor-inv", formatCurrency(valorTotal));
   actualizarGraficaInventario(todosLosProductos);
+  await actualizarGraficaFlujoCaja(todosLosProductos);
 
   const vencimientoPorProducto = new Map();
   movimientos.forEach((movimiento) => {
@@ -152,7 +228,7 @@ export async function cargarInventario() {
         <td>${formatDate(vencimientoPorProducto.get(producto.id))}</td>
         <td>${formatCurrency(stock * costo)}</td>
         <td><span class="status ${stockLimitado ? "warn" : "ok"}">${estado}</span></td>
-        <td><button class="btn btn-soft btn-sm" data-legacy-click="editarProducto('${producto.id}')">Editar</button> <button class="btn btn-soft btn-sm" data-legacy-click="archivarProducto('${producto.id}')">Archivar</button></td>
+      <td><button class="btn btn-soft btn-sm" data-legacy-click="editarProducto('${producto.id}')">Editar</button> ${producto.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="archivarProducto('${producto.id}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarProducto('${producto.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarProducto('${producto.id}')">Eliminar</button></td>
       </tr>
     `;
   });
@@ -171,7 +247,7 @@ export async function cargarInventario() {
         <td>${escapeHtml(movimiento.proveedor || "—")}</td>
         <td>${formatDate(movimiento.vencimiento)}</td>
         <td>${escapeHtml(movimiento.detalle || "—")}</td>
-        <td>${movimiento.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="anularMovimientoInventario('${movimiento.id}')">Anular</button>` : "—"}</td>
+        <td>${movimiento.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="anularMovimientoInventario('${movimiento.id}')">Anular</button>` : "—"} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarMovimientoInventario('${movimiento.id}')">Eliminar</button></td>
       </tr>
     `;
   });
@@ -376,21 +452,28 @@ export async function guardarProducto() {
   const idFinca = doc.getElementById("producto-finca").value;
   const idLote = doc.getElementById("producto-lote").value;
   const stockMinimo = Number(doc.getElementById("producto-stock-minimo").value || 0);
-  if (!nombre || !idFinca || !idLote || !Number.isFinite(stockMinimo) || stockMinimo < 0) {
-    showToast("Escribe el nombre y un mínimo de stock válido.");
+  if (!nombre || !categoria || !unidad || !idFinca || !idLote || !Number.isFinite(stockMinimo) || stockMinimo < 0) {
+    showToast("Completa nombre, categoría, unidad, finca, lote y un mínimo de stock válido.");
     return;
   }
 
   const valores = { nombre, categoria, unidad, id_finca: idFinca, id_lote: idLote, stock_minimo: stockMinimo };
   const editando = appState.registroEnEdicion?.tipo === "producto";
   const respuesta = editando
-    ? await supabase.from("productos").update(valores).eq("id", appState.registroEnEdicion.id)
-    : await supabase.from("productos").insert(valores);
-  if (respuesta.error) {
+    ? await supabase.from("productos").update(valores).eq("id", appState.registroEnEdicion.id).select("id").maybeSingle()
+    : await supabase.from("productos").insert(valores).select("id").single();
+  if (respuesta.error || !respuesta.data) {
     console.error("No se pudo guardar el producto:", respuesta.error);
-    showToast(respuesta.error.code === "PGRST204" || respuesta.error.code === "42703"
+    const { data: { session } } = await supabase.auth.getSession();
+    console.error("Rol de la petición de Supabase:", session ? "authenticated" : "anon");
+    const detalleError = respuesta.error
+      ? [respuesta.error.message, respuesta.error.details, respuesta.error.hint].filter(Boolean).join(" · ")
+      : "No se recibió un registro actualizado";
+    showToast(!respuesta.error ? "No se encontró el producto o no tienes permiso para editarlo." : respuesta.error.code === "23514" && respuesta.error.message.includes("productos_categoria_check")
+      ? "La base de datos rechazó esta categoría. Ejecuta ajustes_categorias_productos_supabase.sql en Supabase y vuelve a guardar."
+      : respuesta.error.code === "PGRST204" || respuesta.error.code === "42703"
       ? "Ejecuta inventario_ubicacion_supabase.sql en Supabase y vuelve a intentarlo."
-      : "No se pudo guardar el producto. Revisa el SQL y los permisos.");
+      : respuesta.error.code === "42501" ? `PostgreSQL negó ${editando ? "UPDATE" : "INSERT"} en productos: ${detalleError} (sesión ${session ? "autenticada" : "anónima"})` : `No se pudo guardar el producto: ${detalleError}`);
     return;
   }
   closeModals();
@@ -403,10 +486,13 @@ export async function editarProducto(id) {
     .from("productos")
     .select("id, nombre, categoria, unidad, stock_minimo, id_finca, id_lote")
     .eq("id", id)
-    .single();
+    .maybeSingle();
   if (error || !producto) {
     console.error("No se pudo cargar el producto para editar:", error);
-    showToast("No se pudo abrir el producto para editar.");
+    showToast(error?.code === "42703" || error?.code === "PGRST204"
+      ? "Faltan las columnas de ubicación del inventario. Ejecuta inventario_ubicacion_supabase.sql en Supabase."
+      : error?.code === "42501" ? "Supabase bloqueó la lectura del producto. Revisa la política SELECT de productos para tu usuario."
+        : !producto && !error ? "No se encontró el producto activo." : `No se pudo abrir el producto: ${error?.message || "error desconocido"}`);
     return;
   }
   await openModal("modalProducto");
@@ -422,6 +508,16 @@ export async function editarProducto(id) {
 
 export async function archivarProducto(id) {
   if (!window.confirm("¿Archivar este producto? Solo se puede archivar cuando su stock sea cero.")) return;
+  const { data: producto, error: errorProducto } = await supabase.from("productos").select("stock").eq("id", id).maybeSingle();
+  if (errorProducto || !producto) {
+    console.error("No se pudo comprobar el stock antes de archivar:", errorProducto);
+    showToast("No se pudo comprobar el producto. Revisa los permisos de lectura.");
+    return;
+  }
+  if (Number(producto.stock) !== 0) {
+    showToast("No se puede archivar mientras tenga stock. Registra o anula movimientos hasta dejarlo en cero.");
+    return;
+  }
   const { data, error } = await supabase
     .from("productos")
     .update({ activo: false })
@@ -444,7 +540,7 @@ export async function guardarMovimientoInventario() {
   const esUsoEnFinca = tipoSeleccionado === "Uso finca";
   const tipo = esUsoEnFinca ? "Salida" : tipoSeleccionado;
   const cantidad = Number(doc.getElementById("mov-cantidad").value);
-  const costo = esUsoEnFinca ? 0 : Number(doc.getElementById("mov-precio").value || 0);
+  const costo = esUsoEnFinca ? 0 : parsearImporte(doc.getElementById("mov-precio").value);
   const proveedor = esUsoEnFinca ? null : doc.getElementById("mov-proveedor").value.trim() || null;
   const vencimiento = esUsoEnFinca ? null : doc.getElementById("mov-vencimiento").value || null;
   if (!idProducto || !Number.isFinite(cantidad) || cantidad <= 0 || !Number.isFinite(costo) || costo < 0) {
@@ -497,6 +593,37 @@ export async function guardarMovimientoInventario() {
   await cargarDashboard();
 }
 
+function parsearImporte(valor: string): number {
+  const limpio = valor.trim().replace(/\s/g, "");
+  if (!limpio) return 0;
+  // Los importes escritos con coma o punto de miles se convierten a entero.
+  if (/^\d{1,3}([,.]\d{3})+$/.test(limpio)) return Number(limpio.replace(/[,.]/g, ""));
+  // También permite decimales con coma o punto.
+  return Number(limpio.replace(/,(?=\d{1,2}$)/, ".").replace(/\.(?=.*\.)/g, "").replace(/,(?=.*[,])/g, ""));
+}
+
+export async function reactivarProducto(id: string): Promise<void> {
+  const { data, error } = await supabase.from("productos").update({ activo: true }).eq("id", id).select("id").maybeSingle();
+  if (error || !data) { console.error("No se pudo reactivar el producto:", error); showToast("No se pudo activar el producto."); return; }
+  showToast("Producto activado nuevamente.");
+  await cargarInventario();
+}
+
+export async function eliminarProducto(id: string): Promise<void> {
+  if (!window.confirm("¿Eliminar permanentemente este producto y todos sus movimientos de inventario? Las labores vinculadas conservarán su descripción, pero perderán el vínculo al producto.")) return;
+  const { error } = await supabase.rpc("eliminar_producto_inventario", { p_id_producto: id });
+  if (error) {
+    console.error("No se pudo eliminar el producto y su historial:", error);
+    showToast(error.code === "PGRST202"
+      ? "Falta ejecutar eliminar_producto_inventario_supabase.sql en Supabase."
+      : `No se pudo eliminar el producto: ${error.message}`);
+    return;
+  }
+  showToast("Producto y movimientos eliminados permanentemente.");
+  await cargarInventario();
+  await cargarDashboard();
+}
+
 export async function anularMovimientoInventario(id) {
   if (!window.confirm("¿Anular este movimiento? El stock se ajustará y el registro quedará en el historial.")) return;
   const { error } = await supabase.rpc("anular_movimiento_inventario", { p_id_movimiento: id });
@@ -506,6 +633,32 @@ export async function anularMovimientoInventario(id) {
     return;
   }
   showToast("Movimiento anulado y stock recalculado.");
+  await cargarInventario();
+  await cargarDashboard();
+}
+
+export async function eliminarMovimientoInventario(id: string): Promise<void> {
+  if (!window.confirm("¿Eliminar permanentemente este movimiento? Si sigue activo, primero se revertirá su efecto sobre el stock.")) return;
+  const { data: movimiento, error: errorLectura } = await supabase.from("movimientos_inventario").select("activo").eq("id", id).maybeSingle();
+  if (errorLectura || !movimiento) { showToast("No se pudo comprobar el movimiento."); return; }
+  let stockRevertido = false;
+  if (movimiento.activo) {
+    const { error } = await supabase.rpc("anular_movimiento_inventario", { p_id_movimiento: id });
+    if (error) { console.error("No se pudo revertir el stock antes de eliminar:", error); showToast(error.message || "No se pudo revertir el efecto del movimiento."); return; }
+    stockRevertido = true;
+  }
+  const { data, error } = await supabase.from("movimientos_inventario").delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
+    console.error("No se pudo eliminar el movimiento:", error);
+    const motivo = error?.code === "42501"
+      ? "Supabase bloqueó el DELETE por permisos. Ejecuta ajustes_eliminar_movimientos_inventario_supabase.sql en Supabase."
+      : error?.code === "23503"
+        ? "Otro registro depende de este movimiento; la base de datos impidió borrarlo."
+        : error?.message || "No se encontró el movimiento o no tienes permiso para borrarlo.";
+    showToast(`${stockRevertido ? "El stock se revirtió, pero " : ""}${motivo}`);
+    return;
+  }
+  showToast("Movimiento eliminado permanentemente.");
   await cargarInventario();
   await cargarDashboard();
 }

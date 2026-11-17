@@ -4,19 +4,20 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import { Icon } from "../../shared/Icon";
 
-type Tab = "general" | "alertas" | "catalogos" | "equipo" | "datos";
+type Tab = "general" | "alertas" | "catalogos" | "equipo" | "log" | "datos";
 type Config = { organizacion: string; zona_horaria: string; moneda: string; unidad_area: string; unidad_peso: string; unidad_volumen: string; tema: string };
 type AlertPref = { tipo: string; activo: boolean; anticipacion_dias: number; canal: string; umbral: number };
 type CatalogItem = { id: string; nombre: string; activo: boolean };
 type Member = { id: string; nombre: string; rol: string };
-type AuditEntry = { id: string; tabla: string; accion: string; registro_id: string | null; fecha: string };
+type AuditEntry = { id: string; id_usuario: string | null; usuario_nombre: string | null; usuario_correo: string | null; tabla: string; accion: string; registro_id: string | null; registro_nombre: string | null; fecha: string; datos_anteriores: Record<string, unknown> | null; datos_nuevos: Record<string, unknown> | null };
 
 const DEFAULT_CONFIG: Config = { organizacion: "AgroNext", zona_horaria: "America/Bogota", moneda: "COP", unidad_area: "ha", unidad_peso: "kg", unidad_volumen: "L", tema: "dark" };
 const ALERT_TYPES = ["Stock bajo", "Vencimientos", "Actividades pendientes", "Eventos sanitarios"];
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "general", label: "General", icon: "settings" }, { id: "alertas", label: "Alertas", icon: "bell" },
   { id: "catalogos", label: "Catálogos", icon: "box" }, { id: "equipo", label: "Equipo y acceso", icon: "users" },
-  { id: "datos", label: "Datos y actividad", icon: "chart" },
+  { id: "log", label: "Log de actividad", icon: "activity" },
+  { id: "datos", label: "Exportar datos", icon: "file" },
 ];
 const EXPORT_TABLES = ["fincas", "lotes", "cultivos", "productos", "movimientos_inventario", "movimientos_financieros", "animales", "empleados", "alertas", "agrosen_configuracion", "agrosen_preferencias_alerta", "agrosen_catalogos", "agrosen_auditoria"];
 
@@ -27,6 +28,38 @@ const accountKey = (key: string, id: string) => `${key}:${id}`;
 function csvCell(value: unknown): string {
   const text = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
   return `"${text.replaceAll('"', '""')}"`;
+}
+function auditLabel(value: string): string {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toLocaleUpperCase("es-CO"));
+}
+function auditValue(value: unknown): string {
+  if (value == null || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Sí" : "No";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+function auditPersonName(entry: AuditEntry, members: Member[], currentUser: User | null): string {
+  const profileName = members.find((member) => member.id === entry.id_usuario)?.nombre;
+  const metadata = currentUser?.id === entry.id_usuario ? currentUser.user_metadata : null;
+  const candidates = [
+    entry.usuario_nombre,
+    profileName,
+    metadata?.nombre,
+    metadata?.full_name,
+    metadata?.name,
+    entry.usuario_correo?.split("@")[0],
+    currentUser?.id === entry.id_usuario ? currentUser.email?.split("@")[0] : null,
+  ];
+  return candidates.find((candidate) => typeof candidate === "string" && candidate.trim() && !["usuario", "user"].includes(candidate.trim().toLocaleLowerCase("es-CO")))?.trim() || "Cuenta sin nombre";
+}
+function auditChanges(entry: AuditEntry): string[] {
+  const before = entry.datos_anteriores || {};
+  const after = entry.datos_nuevos || {};
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter((key) => key !== "id");
+  if (entry.accion === "INSERT") return keys.map((key) => `${auditLabel(key)}: ${auditValue(after[key])}`);
+  if (entry.accion === "DELETE") return keys.map((key) => `${auditLabel(key)}: ${auditValue(before[key])}`);
+  return keys.filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+    .map((key) => `${auditLabel(key)}: ${auditValue(before[key])} → ${auditValue(after[key])}`);
 }
 function downloadCsv(filename: string, rows: Record<string, unknown>[]): void {
   if (!rows.length) return;
@@ -80,6 +113,8 @@ export function SettingsModule() {
   const [catalog, setCatalog] = useState<CatalogItem[]>(() => localRead("agrosen-inventory-categories", []));
   const [members, setMembers] = useState<Member[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [auditSearch, setAuditSearch] = useState("");
+  const [auditError, setAuditError] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -124,7 +159,7 @@ export function SettingsModule() {
         supabase.from("agrosen_preferencias_alerta").select("tipo,activo,anticipacion_dias,canal,umbral").eq("id_usuario", uid),
         supabase.from("agrosen_catalogos").select("id,nombre,activo").eq("id_usuario", uid).eq("tipo", "inventario").eq("activo", true).order("nombre"),
         supabase.from("usuarios").select("id,nombre,rol").order("nombre"),
-        supabase.from("agrosen_auditoria").select("id,tabla,accion,registro_id,fecha").order("fecha", { ascending: false }).limit(50),
+        supabase.from("agrosen_auditoria").select("id,id_usuario,usuario_nombre,usuario_correo,tabla,accion,registro_id,registro_nombre,fecha,datos_anteriores,datos_nuevos").order("fecha", { ascending: false }).limit(500),
       ]);
       if (!current) return;
         if (configRes.data) {
@@ -160,7 +195,8 @@ export function SettingsModule() {
         setAdmin(["administrador", "admin"].includes(String(memberRes.data.find((member) => member.id === uid)?.rol || "").toLowerCase()));
         setProfileName(memberRes.data.find((member) => member.id === uid)?.nombre || user.user_metadata?.nombre || "");
       }
-      if (auditRes.data) setAudit(auditRes.data);
+      if (auditRes.data) { setAudit(auditRes.data as AuditEntry[]); setAuditError(""); }
+      else if (auditRes.error) setAuditError(auditRes.error.message);
       setSchemaReady(!configRes.error && !alertsRes.error && !catalogRes.error);
     })();
     return () => { current = false; };
@@ -231,6 +267,20 @@ export function SettingsModule() {
     const next = catalog.filter((entry) => entry.id !== item.id); setCatalog(next); localStorage.setItem("agrosen-inventory-categories", JSON.stringify(next)); if (user) localStorage.setItem(accountKey("agrosen-inventory-categories", user.id), JSON.stringify(next)); applyInventoryCategories(next); setStatus("Categoría retirada; los productos existentes conservan su registro.");
   }
 
+  async function deleteCategory(item: CatalogItem) {
+    if (!window.confirm(`¿Eliminar permanentemente la categoría ${item.nombre}?`)) return;
+    if (!item.id.startsWith("local-")) {
+      const { error } = await supabase.from("agrosen_catalogos").delete().eq("id", item.id);
+      if (error) { setStatus("No se pudo eliminar permanentemente la categoría."); return; }
+    }
+    const next = catalog.filter((entry) => entry.id !== item.id);
+    setCatalog(next);
+    localStorage.setItem("agrosen-inventory-categories", JSON.stringify(next));
+    if (user) localStorage.setItem(accountKey("agrosen-inventory-categories", user.id), JSON.stringify(next));
+    applyInventoryCategories(next);
+    setStatus("Categoría eliminada permanentemente.");
+  }
+
   async function changeRole(member: Member, rol: string) {
     if (!admin || !user || member.id === user.id) { setStatus("Solo una persona administradora puede cambiar roles de otros usuarios."); return; }
     const { data, error } = await supabase.from("usuarios").update({ rol }).eq("id", member.id).select("id").maybeSingle();
@@ -252,23 +302,30 @@ export function SettingsModule() {
   }
 
   async function refreshAudit() {
-    const { data, error } = await supabase.from("agrosen_auditoria").select("id,tabla,accion,registro_id,fecha").order("fecha", { ascending: false }).limit(50);
-    if (!error && data) setAudit(data);
+    const { data, error } = await supabase.from("agrosen_auditoria").select("id,id_usuario,usuario_nombre,usuario_correo,tabla,accion,registro_id,registro_nombre,fecha,datos_anteriores,datos_nuevos").order("fecha", { ascending: false }).limit(500);
+    if (error) { setAuditError(error.message); return; }
+    setAudit(data as AuditEntry[] || []);
+    setAuditError("");
   }
+
+  const normalizedAuditSearch = auditSearch.trim().toLocaleLowerCase("es-CO");
+  const filteredAudit = audit.filter((entry) => [
+    entry.usuario_nombre, entry.usuario_correo, entry.tabla, entry.accion,
+    entry.registro_nombre, entry.registro_id, ...auditChanges(entry),
+  ].filter(Boolean).join(" ").toLocaleLowerCase("es-CO").includes(normalizedAuditSearch));
 
   return <>
     <div className="page-head"><div><span className="eyebrow">Administración</span><h1>Configuración</h1><p>Preferencias, avisos, catálogos y datos de tu operación.</p></div></div>
     {!schemaReady && <div className="card settings-notice"><Icon name="warning" /><span>La configuración está en modo local. Para sincronizarla con tu cuenta, ejecuta <b>configuracion_supabase.sql</b> en el editor SQL de Supabase.</span></div>}
     {status && <div className="card settings-status" role="status">{status}</div>}
     <div className="settings-layout">
-      <nav className="settings-tabs" aria-label="Secciones de configuración">{TABS.map((item) => <button key={item.id} className={`settings-tab ${tab === item.id ? "active" : ""}`} onClick={() => { setTab(item.id); if (item.id === "datos") void refreshAudit(); }}><Icon name={item.icon as never} />{item.label}</button>)}</nav>
+      <nav className="settings-tabs" aria-label="Secciones de configuración">{TABS.map((item) => <button key={item.id} className={`settings-tab ${tab === item.id ? "active" : ""}`} onClick={() => { setTab(item.id); if (item.id === "log") void refreshAudit(); }}><Icon name={item.icon as never} />{item.label}</button>)}</nav>
       <div className="settings-content">
         {tab === "general" && <form className="card settings-panel" onSubmit={(event) => void saveConfig(event)}>
           <div className="card-head"><div><h2>Preferencias generales</h2><span>Se aplican a esta cuenta y a los próximos registros.</span></div></div>
           <div className="grid form-grid settings-fields">
             <div className="field"><label htmlFor="settings-profile">Nombre de perfil</label><input id="settings-profile" value={profileName} onChange={(event) => setProfileName(event.target.value)} maxLength={100} /></div>
             <div className="field"><label htmlFor="settings-org">Nombre de la organización</label><input id="settings-org" value={config.organizacion} onChange={(event) => setConfig({ ...config, organizacion: event.target.value })} maxLength={100} /></div>
-            <div className="field"><label htmlFor="settings-timezone">Zona horaria</label><select id="settings-timezone" value={config.zona_horaria} onChange={(event) => setConfig({ ...config, zona_horaria: event.target.value })}><option value="America/Bogota">Colombia (Bogotá)</option><option value="America/Lima">Perú (Lima)</option><option value="America/Mexico_City">México (Ciudad de México)</option><option value="America/Santiago">Chile (Santiago)</option><option value="UTC">UTC</option></select></div>
             <div className="field"><label htmlFor="settings-currency">Moneda de reportes</label><select id="settings-currency" value="COP" disabled><option value="COP">Peso colombiano (COP)</option></select><small className="muted">Los importes del sistema están guardados en COP. La conversión a otras monedas requiere definir y aplicar tasas de cambio.</small></div>
             <div className="field"><label htmlFor="settings-area">Unidad de área</label><select id="settings-area" value={config.unidad_area} onChange={(event) => setConfig({ ...config, unidad_area: event.target.value })}><option value="ha">Hectáreas (ha)</option><option value="m²">Metros cuadrados (m²)</option><option value="ac">Acres (ac)</option></select></div>
             <div className="field"><label htmlFor="settings-weight">Unidad de peso</label><select id="settings-weight" value={config.unidad_peso} onChange={(event) => setConfig({ ...config, unidad_peso: event.target.value })}><option value="kg">Kilogramos (kg)</option><option value="t">Toneladas (t)</option><option value="lb">Libras (lb)</option></select></div>
@@ -292,7 +349,7 @@ export function SettingsModule() {
         {tab === "catalogos" && <div className="card settings-panel">
           <div className="card-head"><div><h2>Catálogo de inventario</h2><span>Administra categorías disponibles para nuevos productos.</span></div></div>
           <form className="settings-add-row" onSubmit={(event) => void addCategory(event)}><input aria-label="Nueva categoría" placeholder="Ej. Semillas" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} maxLength={60} /><button className="btn btn-primary" disabled={busy || !newCategory.trim()}>Añadir categoría</button></form>
-          <div className="settings-catalog-list">{["Agrícolas", "Pecuarios", "Herramientas", "Terminados"].map((name) => <div className="settings-catalog-item" key={name}><span>{name}</span><small>Predeterminada</small></div>)}{catalog.map((item) => <div className="settings-catalog-item" key={item.id}><span>{item.nombre}</span><button className="btn btn-soft btn-sm" onClick={() => void removeCategory(item)}>Retirar</button></div>)}</div>
+          <div className="settings-catalog-list">{["Agrícolas", "Pecuarios", "Herramientas", "Terminados"].map((name) => <div className="settings-catalog-item" key={name}><span>{name}</span><small>Predeterminada</small></div>)}{catalog.map((item) => <div className="settings-catalog-item" key={item.id}><span>{item.nombre}</span><button className="btn btn-soft btn-sm" onClick={() => void removeCategory(item)}>Retirar</button><button className="btn btn-danger btn-sm" onClick={() => void deleteCategory(item)}>Eliminar</button></div>)}</div>
           <p className="settings-help">Las categorías existentes en productos se conservan; retirarlas solo evita seleccionarlas en registros nuevos.</p>
         </div>}
 
@@ -304,12 +361,18 @@ export function SettingsModule() {
           <p className="settings-help">Los roles organizan los perfiles, pero la base actual mantiene los datos aislados por usuario: cambiar el rol no comparte fincas ni sustituye las políticas RLS. Tampoco se permite invitar cuentas desde el navegador; se requiere un servicio seguro de servidor.</p>
         </div>}
 
+        {tab === "log" && <div className="card settings-panel">
+          <div className="card-head"><div><h2>Log de actividad</h2><span>Quién hizo cada cambio, qué campos modificó y cuándo ocurrió.</span></div><button className="btn btn-soft btn-sm" onClick={() => void refreshAudit()}><Icon name="activity" /> Actualizar</button></div>
+          <div className="settings-export"><label className="field"><span>Buscar en el log</span><input value={auditSearch} onChange={(event) => setAuditSearch(event.target.value)} placeholder="Persona, módulo, acción o cambio..." /></label><span className="muted">Mostrando {filteredAudit.length} de {audit.length} eventos recientes</span></div>
+          {auditError && <div className="settings-notice"><Icon name="warning" /><span>No se pudo cargar el log. Ejecuta <b>auditoria_supabase.sql</b> en Supabase. Detalle: {auditError}</span></div>}
+          <div className="table-wrap"><table className="table"><thead><tr><th>Fecha y hora</th><th>Persona</th><th>Módulo</th><th>Acción</th><th>Qué cambió</th><th>Elemento</th></tr></thead><tbody>{filteredAudit.length ? filteredAudit.map((entry) => <tr key={entry.id}><td>{new Date(entry.fecha).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "medium", timeZone: config.zona_horaria || "America/Bogota" })}</td><td>{auditPersonName(entry, members, user)}{entry.usuario_correo ? <small className="muted" style={{ display: "block" }}>{entry.usuario_correo}</small> : null}</td><td>{auditLabel(entry.tabla)}</td><td>{entry.accion === "INSERT" ? "Creó" : entry.accion === "UPDATE" ? "Editó" : entry.accion === "DELETE" ? "Eliminó" : entry.accion}</td><td>{auditChanges(entry).length ? auditChanges(entry).join(" · ") : "Sin diferencias de campos"}</td><td>{entry.registro_nombre || entry.registro_id || "—"}{entry.registro_nombre && entry.registro_id ? <small className="muted" style={{ display: "block" }}>{entry.registro_id}</small> : null}</td></tr>) : <tr><td className="empty" colSpan={6}>{auditError ? "No se pudo cargar el historial." : audit.length ? "No hay cambios que coincidan con la búsqueda." : "Todavía no hay cambios registrados. Instala auditoria_supabase.sql para empezar a guardar actividad."}</td></tr>}</tbody></table></div>
+          <p className="settings-help">El sistema guarda la persona, la hora del servidor, el módulo, el registro y los valores anteriores y nuevos de cada campo modificado. El log no permite alterar sus eventos desde esta pantalla.</p>
+        </div>}
+
         {tab === "datos" && <div className="card settings-panel">
-          <div className="card-head"><div><h2>Datos y actividad</h2><span>Exporta tus registros y consulta cambios recientes.</span></div></div>
+          <div className="card-head"><div><h2>Exportar datos</h2><span>Descarga una copia CSV de los registros visibles para tu cuenta.</span></div></div>
           <div className="settings-export"><label className="field"><span>Datos a exportar (CSV)</span><select id="settings-export-table">{EXPORT_TABLES.map((table) => <option key={table} value={table}>{table.replaceAll("_", " ")}</option>)}</select></label><button className="btn btn-primary" disabled={busy} onClick={() => void exportTable((document.getElementById("settings-export-table") as HTMLSelectElement).value)}><Icon name="file" /> Exportar</button></div>
-          <div className="settings-audit-head"><div><h3>Actividad reciente</h3><span>Últimos cambios registrados en la cuenta</span></div></div>
-          <div className="table-wrap"><table className="table"><thead><tr><th>Fecha</th><th>Módulo / tabla</th><th>Acción</th><th>Registro</th></tr></thead><tbody>{audit.length ? audit.map((entry) => <tr key={entry.id}><td>{new Date(entry.fecha).toLocaleString("es-CO")}</td><td>{entry.tabla}</td><td>{entry.accion}</td><td>{entry.registro_id || "—"}</td></tr>) : <tr><td className="empty" colSpan={4}>El historial aparecerá después de instalar la auditoría de Supabase.</td></tr>}</tbody></table></div>
-          <p className="settings-help">Las exportaciones respetan las políticas RLS del usuario conectado. La auditoría guarda metadatos de acción, tabla y registro; no almacena copias de datos sensibles.</p>
+          <p className="settings-help">Las exportaciones respetan las políticas RLS del usuario conectado.</p>
         </div>}
       </div>
     </div>

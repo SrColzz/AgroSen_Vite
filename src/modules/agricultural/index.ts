@@ -1,7 +1,7 @@
 import { supabase } from "../../lib/supabase";
 import { appState } from "../../shared/state";
 import { calculateHarvest, escapeHtml, fechaLocalActual, formatDate, renderTable, showToast, updateKpi } from "../../shared/dom";
-import { actualizarRotulosEdicion, archivarRegistro, cargarDashboard, closeModals, openModal } from "../../app/controller";
+import { actualizarRotulosEdicion, archivarRegistro, reactivarRegistro, cargarDashboard, closeModals, openModal } from "../../app/controller";
 import { actualizarUnidadProductoLabor, asegurarProductoEnSelector } from "../inventory";
 import { areaFromHa, areaToHa, formatArea, getAreaUnit } from "../../shared/preferences";
 const doc: any = document;
@@ -231,7 +231,6 @@ export async function cargarCatalogoCultivos() {
   const { data, error } = await supabase
     .from("tipos_cultivo")
     .select("id, nombre, variedad, ciclo_dias, activo")
-    .eq("activo", true)
     .order("nombre", { ascending: true });
 
   if (error) {
@@ -242,16 +241,17 @@ export async function cargarCatalogoCultivos() {
     return;
   }
 
-  appState.catalogoCultivos = data || [];
+  const catalogoCompleto = data || [];
+  appState.catalogoCultivos = catalogoCompleto.filter((cultivo) => cultivo.activo);
   const tbody = doc.querySelector("#tiposCultivoTable tbody");
   if (tbody) {
-    renderTable("tiposCultivoTable", appState.catalogoCultivos, (cultivo) => `
+    renderTable("tiposCultivoTable", catalogoCompleto, (cultivo) => `
       <tr>
         <td>${escapeHtml(cultivo.nombre)}</td>
         <td>${escapeHtml(cultivo.variedad || "—")}</td>
         <td>${cultivo.ciclo_dias}</td>
-        <td><span class="status ok">Disponible</span></td>
-        <td><button class="btn btn-soft btn-sm" onclick="editarTipoCultivo('${cultivo.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="archivarTipoCultivo('${cultivo.id}')">Retirar</button></td>
+        <td><span class="status ${cultivo.activo ? "ok" : "warn"}">${cultivo.activo ? "Disponible" : "Inactivo"}</span></td>
+        <td>${cultivo.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="editarTipoCultivo('${cultivo.id}')">Editar</button><button class="btn btn-soft btn-sm" data-legacy-click="archivarTipoCultivo('${cultivo.id}')">Retirar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarTipoCultivo('${cultivo.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('tipos_cultivo','${cultivo.id}','este tipo de cultivo')">Eliminar</button></td>
       </tr>
     `);
   }
@@ -490,19 +490,33 @@ export async function cargarFincas() {
   }
 
   const fincas = data || [];
-  let lotes = [];
-  if (fincas.length) {
-    const { data: lotesData, error: errorLotes } = await supabase
-      .from("lotes")
-      .select("id, id_finca, nombre, area, uso, activo")
-      .in("id_finca", fincas.map((finca) => finca.id));
+  const { data: lotesData, error: errorLotes } = await supabase
+    .from("lotes")
+    .select("id, id_finca, nombre, area, uso, activo")
+    .order("nombre", { ascending: true });
 
-    if (errorLotes) {
-      console.error("No se pudieron cargar los lotes:", errorLotes);
-      showToast("No se pudieron cargar los lotes. Revisa la tabla y sus permisos.");
-      return;
+  if (errorLotes) {
+    console.error("No se pudieron cargar los lotes:", errorLotes);
+    showToast("No se pudieron cargar los lotes. Revisa la tabla y sus permisos.");
+    return;
+  }
+  const lotes = lotesData || [];
+  const cultivosPorLote = new Map();
+  if (lotes.length) {
+    const { data: cultivosActivos, error: errorCultivos } = await supabase
+      .from("cultivos")
+      .select("id_lote, tipo, variedad")
+      .eq("activo", true)
+      .in("id_lote", lotes.map((lote) => lote.id));
+    if (errorCultivos) {
+      console.error("No se pudieron cargar los cultivos asociados a los lotes:", errorCultivos);
+    } else {
+      (cultivosActivos || []).forEach((cultivo) => {
+        const grupo = cultivosPorLote.get(cultivo.id_lote) || [];
+        grupo.push([cultivo.tipo, cultivo.variedad].filter(Boolean).join(" · "));
+        cultivosPorLote.set(cultivo.id_lote, grupo);
+      });
     }
-    lotes = lotesData || [];
   }
 
   const areaTotal = fincas.reduce(
@@ -520,6 +534,7 @@ export async function cargarFincas() {
   );
 
   const lotesPorFinca = new Map();
+  const fincasPorId = new Map(fincas.map((finca) => [finca.id, finca]));
   lotes.forEach((lote) => {
     const grupo = lotesPorFinca.get(lote.id_finca) || [];
     grupo.push(lote);
@@ -532,15 +547,31 @@ export async function cargarFincas() {
       <td>${escapeHtml(finca.ubicacion)}</td>
       <td>${formatArea(Number(finca.area_total))}</td>
       <td>${escapeHtml(finca.tipo_suelo)}</td>
-      <td>${escapeHtml(
-        (lotesPorFinca.get(finca.id) || [])
-          .map((lote) => `${lote.nombre} · ${formatArea(Number(lote.area))}`)
-          .join(", ") || finca.detalle_lotes || "—",
-      )}</td>
+      <td>${(lotesPorFinca.get(finca.id) || []).length || escapeHtml(finca.detalle_lotes || "—")} ${(lotesPorFinca.get(finca.id) || []).length ? ((lotesPorFinca.get(finca.id) || []).length === 1 ? "lote" : "lotes") : ""}</td>
       <td><span class="status ${finca.activo ? "ok" : "warn"}">${finca.activo ? "Activa" : "Inactiva"}</span></td>
-      <td><button class="btn btn-soft btn-sm" onclick="editarFinca('${finca.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="archivarFinca('${finca.id}')">Archivar</button></td>
+      <td><button class="btn btn-soft btn-sm" data-legacy-click="editarFinca('${finca.id}')">Editar</button> ${finca.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="archivarFinca('${finca.id}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarFinca('${finca.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('fincas','${finca.id}','esta finca')">Eliminar</button></td>
     </tr>
   `);
+
+  renderTable("lotTable", lotes, (lote) => {
+    const finca = fincasPorId.get(lote.id_finca);
+    return `
+      <tr>
+        <td>${escapeHtml(finca?.nombre || "Finca no disponible")}</td>
+        <td>${escapeHtml(lote.nombre)}</td>
+        <td>${formatArea(Number(lote.area || 0))}</td>
+        <td>${escapeHtml([
+          ...(cultivosPorLote.get(lote.id) || []),
+          lote.uso ? `Uso: ${lote.uso}` : "",
+        ].filter(Boolean).join(" · ") || "Sin cultivos ni uso registrado")}</td>
+        <td><span class="status ${lote.activo ? "ok" : "warn"}">${lote.activo ? "Activo" : "Inactivo"}</span></td>
+        <td>${lote.activo
+          ? `<button class="btn btn-soft btn-sm" data-legacy-click="archivarLote('${lote.id}')">Archivar</button>`
+          : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarLote('${lote.id}')">Activar</button>`}
+          <button class="btn btn-danger btn-sm" data-legacy-click="eliminarLote('${lote.id}')">Eliminar</button></td>
+      </tr>
+    `;
+  });
 }
 
 export async function editarFinca(id) {
@@ -579,7 +610,6 @@ export async function cargarCultivos() {
     .select(
       "id, id_lote, tipo, variedad, fecha_siembra, fecha_cosecha_estimada, estado, activo",
     )
-    .eq("activo", true)
     .order("fecha_siembra", { ascending: false });
 
   if (error) {
@@ -590,8 +620,10 @@ export async function cargarCultivos() {
     return;
   }
 
-  const cultivos = data || [];
-  const loteIds = [...new Set(cultivos.map((cultivo) => cultivo.id_lote))];
+  const todosLosCultivos = data || [];
+  const cultivos = todosLosCultivos.filter((cultivo) => cultivo.activo);
+  const cultivosInactivos = todosLosCultivos.filter((cultivo) => !cultivo.activo);
+  const loteIds = [...new Set(todosLosCultivos.map((cultivo) => cultivo.id_lote))];
   let lotes = [];
 
   if (loteIds.length) {
@@ -609,8 +641,7 @@ export async function cargarCultivos() {
   }
 
   const nombresLotes = new Map(lotes.map((lote) => [lote.id, lote.nombre]));
-  const activos = cultivos.filter((cultivo) => cultivo.activo).length;
-  updateKpi("kpi-cultivos", activos);
+  updateKpi("kpi-cultivos", cultivos.length);
 
   renderTable("cultivosTable", cultivos, (cultivo) => `
     <tr>
@@ -620,7 +651,19 @@ export async function cargarCultivos() {
       <td>${formatDate(cultivo.fecha_siembra)}</td>
       <td>${formatDate(cultivo.fecha_cosecha_estimada)}</td>
       <td><span class="status info">${escapeHtml(cultivo.estado)}</span></td>
-      <td><button class="btn btn-soft btn-sm" onclick="editarCultivo('${cultivo.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="archivarCultivo('${cultivo.id}')">Archivar</button></td>
+      <td><button class="btn btn-soft btn-sm" data-legacy-click="editarCultivo('${cultivo.id}')">Editar</button> <button class="btn btn-soft btn-sm" data-legacy-click="archivarCultivo('${cultivo.id}')">Archivar</button> <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('cultivos','${cultivo.id}','este cultivo')">Eliminar</button></td>
+    </tr>
+  `);
+
+  renderTable("cultivosInactivosTable", cultivosInactivos, (cultivo) => `
+    <tr>
+      <td>${escapeHtml(cultivo.tipo)}</td>
+      <td>${escapeHtml(cultivo.variedad || "—")}</td>
+      <td>${escapeHtml(nombresLotes.get(cultivo.id_lote) || "—")}</td>
+      <td>${formatDate(cultivo.fecha_siembra)}</td>
+      <td>${formatDate(cultivo.fecha_cosecha_estimada)}</td>
+      <td><span class="status warn">Cerrado / inactivo</span></td>
+      <td><button class="btn btn-primary btn-sm" data-legacy-click="reactivarCultivo('${cultivo.id}')">Activar</button> <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('cultivos','${cultivo.id}','este cultivo')">Eliminar</button></td>
     </tr>
   `);
 }
@@ -742,7 +785,7 @@ export async function cargarLabores() {
         <td>${escapeHtml(referencias.cultivos.get(labor.id_cultivo) || "—")}</td>
         <td>${escapeHtml(referencias.lotes.get(labor.id_lote) || "—")}</td>
         <td>${escapeHtml([insumoMostrado, cantidad].filter(Boolean).join(" · ") || "—")}</td>
-        <td><button class="btn btn-soft btn-sm" onclick="editarLabor('${labor.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="anularLabor('${labor.id}')">Archivar</button></td>
+        <td><button class="btn btn-soft btn-sm" data-legacy-click="editarLabor('${labor.id}')">Editar</button> <button class="btn btn-soft btn-sm" data-legacy-click="anularLabor('${labor.id}')">Archivar</button> <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('labores_culturales','${labor.id}','esta labor')">Eliminar</button></td>
       </tr>
     `;
   });
@@ -812,7 +855,7 @@ export async function cargarCosechas() {
       <td>${escapeHtml(cosecha.calidad)}</td>
       <td>${cosecha.es_final ? "Final" : "Parcial"}</td>
       <td>${escapeHtml(cosecha.destino || "—")}</td>
-        <td><button class="btn btn-soft btn-sm" onclick="editarCosecha('${cosecha.id}')">Editar</button> <button class="btn btn-soft btn-sm" onclick="anularCosecha('${cosecha.id}')">Archivar</button></td>
+        <td><button class="btn btn-soft btn-sm" data-legacy-click="editarCosecha('${cosecha.id}')">Editar</button> <button class="btn btn-soft btn-sm" data-legacy-click="anularCosecha('${cosecha.id}')">Archivar</button> <button class="btn btn-danger btn-sm" data-legacy-click="eliminarRegistroPermanente('cosechas','${cosecha.id}','esta cosecha')">Eliminar</button></td>
     </tr>
   `);
 }
@@ -822,6 +865,10 @@ export async function archivarTipoCultivo(id) {
   if (await archivarRegistro("tipos_cultivo", id, "cultivos del catálogo")) {
     await cargarCatalogoCultivos();
   }
+}
+
+export async function reactivarTipoCultivo(id) {
+  if (await reactivarRegistro("tipos_cultivo", id, "el tipo de cultivo")) await cargarCatalogoCultivos();
 }
 
 export async function archivarFinca(id) {
@@ -871,8 +918,58 @@ export async function archivarFinca(id) {
   cargarDashboard();
 }
 
+export async function reactivarFinca(id) {
+  if (!await reactivarRegistro("fincas", id, "la finca")) return;
+  const { data: lotes, error } = await supabase.from("lotes").update({ activo: true }).eq("id_finca", id).select("id");
+  if (error) {
+    console.error("La finca se activó, pero no se pudieron activar sus lotes:", error);
+    showToast("Finca activada. Revisa el estado de sus lotes.");
+  } else {
+    const ids = (lotes || []).map((lote) => lote.id);
+    if (ids.length) await supabase.from("cultivos").update({ activo: true }).in("id_lote", ids);
+  }
+  await cargarFincas();
+  await cargarCultivos();
+  cargarDashboard();
+}
+
+export async function archivarLote(id: string): Promise<void> {
+  if (!await archivarRegistro("lotes", id, "el lote")) return;
+  await cargarFincas();
+  await cargarCultivos();
+  await cargarDashboard();
+}
+
+export async function reactivarLote(id: string): Promise<void> {
+  if (!await reactivarRegistro("lotes", id, "el lote")) return;
+  await cargarFincas();
+  await cargarDashboard();
+}
+
+export async function eliminarLote(id: string): Promise<void> {
+  if (!window.confirm("¿Eliminar permanentemente este lote? Se quitará la asignación del lote a animales y productos, y se eliminarán los cultivos, labores y cosechas vinculados. Esta acción no se puede deshacer.")) return;
+  const { error } = await supabase.rpc("eliminar_lote_agricola", { p_id_lote: id });
+  if (error) {
+    console.error("No se pudo eliminar el lote y resolver sus dependencias:", error);
+    showToast(error.code === "PGRST202"
+      ? "Falta ejecutar eliminar_lote_agricola_supabase.sql en Supabase."
+      : `No se pudo eliminar el lote: ${error.message}`);
+    return;
+  }
+  showToast("Lote eliminado. Se retiraron sus cultivos y registros asociados; animales y productos se conservaron sin lote asignado.");
+  await Promise.all([cargarFincas(), cargarCultivos(), cargarLabores(), cargarCosechas()]);
+  await cargarDashboard();
+}
+
 export async function archivarCultivo(id) {
   if (await archivarRegistro("cultivos", id, "cultivos activos")) {
+    await cargarCultivos();
+    cargarDashboard();
+  }
+}
+
+export async function reactivarCultivo(id) {
+  if (await reactivarRegistro("cultivos", id, "el cultivo")) {
     await cargarCultivos();
     cargarDashboard();
   }

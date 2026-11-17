@@ -30,6 +30,11 @@ export function InventoryModule() {
         <div className="chart-box"><canvas id="inventoryChart" /></div>
       </div>
 
+      <div className="card glass-panel" style={{ marginTop: 18 }}>
+        <div className="card-head"><div><h2>Flujo valorizado del inventario</h2><span>Solo movimientos vigentes; las salidas se valoran al costo promedio y los anulados no cuentan.</span></div><label className="field"><span>Rango</span><select id="inventory-cashflow-range" defaultValue="6" data-legacy-change="cargarInventario()"><option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option></select></label></div>
+        <div className="chart-box"><canvas id="inventoryCashflowChart" /></div>
+      </div>
+
       <div className="card" style={{ marginTop: 18 }}>
         <div className="toolbar">
           <input className="search" data-legacy-input="filterTable('stockTable', this.value)" placeholder="Buscar producto..." />

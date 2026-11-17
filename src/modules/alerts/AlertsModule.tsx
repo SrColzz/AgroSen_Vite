@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cambiarEstadoAlerta, cargarAlertas, type Alerta } from "./data";
+import { cambiarEstadoAlerta, cargarAlertas, eliminarAlerta, type Alerta } from "./data";
 import { Icon } from "../../shared/Icon";
 
 export function AlertsModule() {
@@ -16,6 +16,11 @@ export function AlertsModule() {
 
   async function cambiarEstado(id: string, estado: "vista" | "resuelta") {
     if (await cambiarEstadoAlerta(id, estado)) await actualizar();
+  }
+
+  async function borrar(id: string) {
+    if (!window.confirm("¿Eliminar permanentemente esta alerta?")) return;
+    if (await eliminarAlerta(id)) await actualizar();
   }
 
   return (
@@ -61,6 +66,7 @@ export function AlertsModule() {
                     <td><div className="table-actions">
                       {alerta.estado === "pendiente" && <button className="btn btn-soft btn-sm" onClick={() => void cambiarEstado(alerta.id, "vista")}>Marcar vista</button>}
                       {alerta.estado !== "resuelta" && <button className="btn btn-primary btn-sm" onClick={() => void cambiarEstado(alerta.id, "resuelta")}>Resolver</button>}
+                      <button className="btn btn-danger btn-sm" onClick={() => void borrar(alerta.id)}>Eliminar</button>
                     </div></td>
                   </tr>)}
             </tbody>
