@@ -34,7 +34,7 @@ export function DashboardModule() {
           <div className="chart-box"><canvas id="dashboardInventoryChart" /><p id="dashboardInventoryEmpty" className="chart-empty" hidden /></div>
         </div>
         <div className="card glass-panel">
-          <div className="card-head"><div><h2>Cultivos activos</h2><span>Distribución por estado</span></div></div>
+          <div className="card-head"><div><h2>Cultivos planificados</h2><span>Cantidad de planes por tipo de cultivo</span></div></div>
           <div className="chart-box"><canvas id="dashboardCropsChart" /><p id="dashboardCropsEmpty" className="chart-empty" hidden /></div>
         </div>
         <div className="card glass-panel">

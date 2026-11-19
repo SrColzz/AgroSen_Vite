@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthScreen } from "./modules/auth/AuthScreen";
+import { LandingPage } from "./modules/landing/LandingPage";
 import { supabase } from "./lib/supabase";
 
 const LegacyWorkspace = lazy(() => import("./app/LegacyWorkspace").then((module) => ({
@@ -11,6 +12,8 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [hasWorkspace, setHasWorkspace] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [recovering, setRecovering] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,8 +23,8 @@ export default function App() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      if (nextSession) setHasWorkspace(true);
-      if (event === "PASSWORD_RECOVERY") setRecovering(true);
+      if (nextSession) { setHasWorkspace(true); setAuthOpen(false); }
+      if (event === "PASSWORD_RECOVERY") { setRecovering(true); setAuthOpen(true); }
     });
 
     void supabase.auth.getSession().then(({ data, error }) => {
@@ -48,7 +51,8 @@ export default function App() {
 
   return (
     <>
-      <AuthScreen visible={authReady && !session} />
+      {authReady && !session && !authOpen && !recovering && <LandingPage onLogin={() => { setAuthMode("login"); setAuthOpen(true); }} onRegister={() => { setAuthMode("register"); setAuthOpen(true); }} />}
+      <AuthScreen visible={authReady && !session && authOpen} initialMode={authMode} onBack={() => setAuthOpen(false)} />
       {hasWorkspace && <Suspense fallback={null}><LegacyWorkspace session={session} /></Suspense>}
       {recovering && <div className="login"><div className="login-box"><div className="login-brand"><h1>Restablecer contraseña</h1><p>Elige una contraseña nueva para tu cuenta.</p></div><form onSubmit={(event) => void updatePassword(event)}>
         <div className="field"><label htmlFor="recovery-password">Nueva contraseña</label><input id="recovery-password" type="password" autoComplete="new-password" minLength={8} required value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /></div>

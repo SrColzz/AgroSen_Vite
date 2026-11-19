@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../../lib/supabase";
 import { Icon } from "../../shared/Icon";
 
-export function AuthScreen({ visible }: { visible: boolean }) {
+export function AuthScreen({ visible, initialMode = "login", onBack }: { visible: boolean; initialMode?: "login" | "register"; onBack?: () => void }) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -13,7 +13,10 @@ export function AuthScreen({ visible }: { visible: boolean }) {
   const [allowAutofill, setAllowAutofill] = useState(false);
 
   useEffect(() => {
-    if (!visible) {
+    if (visible) {
+      setMode(initialMode);
+    } else {
+      setMode("login");
       setName("");
       setEmail("");
       setPassword("");
@@ -21,7 +24,7 @@ export function AuthScreen({ visible }: { visible: boolean }) {
       setNotice("");
       setAllowAutofill(false);
     }
-  }, [visible]);
+  }, [visible, initialMode]);
 
   function clearFields() {
     setName("");
@@ -132,7 +135,8 @@ export function AuthScreen({ visible }: { visible: boolean }) {
 
   return (
     <div className={`login ${visible ? "" : "hidden"}`}>
-      <div className="login-box">
+      {onBack && <button className="login-back" onClick={onBack} type="button">← Volver al inicio</button>}
+      <div className="login-box" key={mode}>
         <div className="login-brand">
           <div className="brand-mark"><Icon name="sprout" /></div>
           <h1>Agro<span style={{ color: "var(--primary)" }}>Next</span></h1>

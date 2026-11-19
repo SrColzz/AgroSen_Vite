@@ -189,7 +189,7 @@ export async function cargarAnimales() {
         <td>${formatDate(animal.fecha_nacimiento)}</td>
         <td>${escapeHtml(animal.codigo_trazabilidad)}</td>
         <td>${escapeHtml(ubicacion || "Sin ubicación asignada")}</td>
-        <td><span class="status ${animal.estado === "Activo" ? "ok" : "info"}">${escapeHtml(animal.estado)}</span></td>
+        <td><span class="status ${animal.activo === false ? "warn" : animal.estado === "Activo" ? "ok" : "info"}">${escapeHtml(animal.activo === false ? "Archivado" : animal.estado)}</span></td>
         <td><button class="btn btn-soft btn-sm" data-legacy-click="editarAnimal('${animal.id}')">Editar</button> ${animal.activo ? `<button class="btn btn-soft btn-sm" data-legacy-click="archivarAnimal('${animal.id}')">Archivar</button>` : `<button class="btn btn-primary btn-sm" data-legacy-click="reactivarAnimal('${animal.id}')">Activar</button>`} <button class="btn btn-danger btn-sm" data-legacy-click="eliminarAnimal('${animal.id}')">Eliminar</button></td>
       </tr>
     `;
@@ -229,7 +229,7 @@ export async function guardarAnimal() {
     return;
   }
 
-  const datosAnimal = {
+  const datosAnimal: Record<string, any> = {
     id_especie: idEspecie,
     id_raza: idRaza,
     especie_detalle: nombreEspecie.toLowerCase() === "otro" ? especieDetalle : null,
@@ -243,6 +243,7 @@ export async function guardarAnimal() {
     observaciones: observaciones || null,
   };
   const editando = appState.registroEnEdicion?.tipo === "animal";
+  if (!editando) datosAnimal.activo = true;
   const respuesta = editando
     ? await supabase.from("animales").update(datosAnimal).eq("id", appState.registroEnEdicion.id).select("codigo_trazabilidad").single()
     : await supabase.from("animales").insert(datosAnimal).select("codigo_trazabilidad").single();
@@ -340,6 +341,7 @@ export function exportarAnimalesCSV() {
 
 export async function cargarAnimalesEnSelector(selectorId, idSeleccionado = null) {
   const selector = doc.getElementById(selectorId);
+  if (!selector) return false;
   selector.replaceChildren(new Option("Cargando animales...", ""));
   const { data, error } = await supabase
     .from("animales")
@@ -353,8 +355,15 @@ export async function cargarAnimalesEnSelector(selectorId, idSeleccionado = null
   }
   const animales = data || [];
   selector.replaceChildren(new Option("Selecciona un animal", ""));
-  animales.filter((animal) => animal.activo && animal.estado === "Activo").forEach((animal) => {
-    selector.add(new Option(animal.identificacion, animal.id));
+  animales.forEach((animal) => {
+    const estadoActivo = String(animal.estado || "").trim().toLocaleLowerCase("es-CO") === "activo";
+    const disponible = animal.activo !== false && estadoActivo;
+    const opcion = new Option(
+      disponible ? animal.identificacion : `${animal.identificacion} (${animal.activo === false ? "Archivado" : animal.estado || "Inactivo"})`,
+      animal.id,
+    );
+    opcion.disabled = !disponible && animal.id !== idSeleccionado;
+    selector.add(opcion);
   });
   if (idSeleccionado && !animales.some((animal) => animal.id === idSeleccionado)) {
     const { data: seleccionado, error: errorSeleccionado } = await supabase
@@ -363,16 +372,19 @@ export async function cargarAnimalesEnSelector(selectorId, idSeleccionado = null
       console.error("No se pudo recuperar el animal del registro histórico:", errorSeleccionado);
       return false;
     }
-    if (seleccionado) animales.push(seleccionado);
+    if (seleccionado) {
+      animales.push(seleccionado);
+      const opcion = new Option(`${seleccionado.identificacion} (${seleccionado.estado.toLowerCase()})`, seleccionado.id);
+      selector.add(opcion);
+    }
   }
   if (idSeleccionado) {
     const animal = animales.find((item) => item.id === idSeleccionado);
-    if (animal && !arrayFrom(selector.options).some((option) => option.value === animal.id)) {
-      selector.add(new Option(`${animal.identificacion} (${animal.estado.toLowerCase()})`, animal.id));
-    }
+    if (animal && !arrayFrom(selector.options).some((option) => option.value === animal.id)) selector.add(new Option(`${animal.identificacion} (${animal.estado.toLowerCase()})`, animal.id));
     selector.value = idSeleccionado;
   }
-  if (selector.options.length === 1) selector.options[0].text = "Registra primero un animal activo";
+  const activosDisponibles = animales.some((animal) => animal.activo !== false && String(animal.estado || "").trim().toLocaleLowerCase("es-CO") === "activo");
+  if (!activosDisponibles) selector.options[0].text = "No hay animales activos; revisa su estado";
   return true;
 }
 

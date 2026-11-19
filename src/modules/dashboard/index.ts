@@ -60,10 +60,10 @@ export function initProductionChart(): void {
   if (cropsCanvas instanceof HTMLCanvasElement && !charts.crops) {
     charts.crops = new Chart(cropsCanvas, {
       type: "bar",
-      data: { labels: [], datasets: [{ label: "Cultivos activos", data: [], backgroundColor: ["#2f855a", "#d69e2e", "#3182ce", "#dd6b20"] }] },
+      data: { labels: [], datasets: [{ label: "Cultivos planificados", data: [], backgroundColor: ["#2f855a", "#d69e2e", "#3182ce", "#dd6b20", "#805ad5", "#319795"] }] },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${Number(context.parsed.y).toLocaleString("es-CO", { maximumFractionDigits: 0 })} cultivos` } } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${Number(context.parsed.y).toLocaleString("es-CO", { maximumFractionDigits: 0 })} plan(es) de cultivo` } } },
         scales: { y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1, callback: (value) => Number(value).toLocaleString("es-CO", { maximumFractionDigits: 0 }) } } },
       },
     });
@@ -132,12 +132,12 @@ async function cargarGraficasDashboard(period: string | number, target: "all" | 
   const inicio = `${claves[0]}-01`;
   const [respuestaProductos, respuestaCultivos, respuestaFinanzas, respuestaLeche] = await Promise.all([
     supabase.from("productos").select("categoria, stock, costo_promedio").eq("activo", true),
-    supabase.from("cultivos").select("estado").eq("activo", true),
+    supabase.from("cultivos").select("tipo").eq("activo", true).eq("estado", "Planificado"),
     supabase.from("movimientos_financieros").select("fecha, tipo, monto").eq("activo", true).gte("fecha", inicio),
     supabase.from("producciones_animal").select("fecha, tipo, cantidad, unidad").eq("activo", true).eq("tipo", "Leche").gte("fecha", inicio),
   ]);
   if (respuestaProductos.error) console.error("No se pudo cargar la distribución del inventario:", respuestaProductos.error);
-  if (respuestaCultivos.error) console.error("No se pudo cargar el estado de los cultivos:", respuestaCultivos.error);
+  if (respuestaCultivos.error) console.error("No se pudieron cargar los cultivos planificados:", respuestaCultivos.error);
   if (respuestaFinanzas.error) console.error("No se pudieron cargar los movimientos financieros del dashboard:", respuestaFinanzas.error);
   if (respuestaLeche.error) console.error("No se pudo cargar la producción de leche:", respuestaLeche.error);
 
@@ -155,19 +155,19 @@ async function cargarGraficasDashboard(period: string | number, target: "all" | 
     ? "No se pudo cargar el inventario. Revisa la consola y los permisos de Supabase."
     : valorPorCategoria.size ? "" : "Aún no hay productos activos con valor en inventario.");
 
-  const cultivosPorEstado = new Map<string, number>();
+  const cultivosPlanificadosPorTipo = new Map<string, number>();
   (respuestaCultivos.data || []).forEach((cultivo) => {
-    const estado = cultivo.estado || "Sin estado";
-    cultivosPorEstado.set(estado, (cultivosPorEstado.get(estado) || 0) + 1);
+    const tipo = cultivo.tipo?.trim() || "Sin tipo";
+    cultivosPlanificadosPorTipo.set(tipo, (cultivosPlanificadosPorTipo.get(tipo) || 0) + 1);
   });
   if (target === "all" && charts.crops) {
-    charts.crops.data.labels = [...cultivosPorEstado.keys()];
-    charts.crops.data.datasets[0].data = [...cultivosPorEstado.values()];
+    charts.crops.data.labels = [...cultivosPlanificadosPorTipo.keys()];
+    charts.crops.data.datasets[0].data = [...cultivosPlanificadosPorTipo.values()];
     charts.crops.update();
   }
   if (target === "all") mostrarMensajeGrafica("dashboardCropsEmpty", respuestaCultivos.error
-    ? "No se pudieron cargar los cultivos. Revisa la consola y los permisos de Supabase."
-    : cultivosPorEstado.size ? "" : "Aún no hay cultivos activos registrados.");
+    ? "No se pudieron cargar los cultivos planificados. Revisa la consola y los permisos de Supabase."
+    : cultivosPlanificadosPorTipo.size ? "" : "Aún no hay cultivos planificados registrados.");
 
   const ingresosPorMes = new Map(claves.map((clave) => [clave, 0]));
   const egresosPorMes = new Map(claves.map((clave) => [clave, 0]));

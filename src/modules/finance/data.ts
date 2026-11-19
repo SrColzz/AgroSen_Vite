@@ -3,6 +3,7 @@ import { appState } from "../../shared/state";
 import { escapeHtml, fechaLocalActual, formatDate, renderTable, showToast, updateKpi } from "../../shared/dom";
 import { updateFinanceChart } from "../dashboard";
 import { formatCurrency } from "../../shared/preferences";
+import { parseLocalizedNumber } from "../../shared/number-format";
 
 type MovimientoFinanciero = {
   id: string;
@@ -25,6 +26,49 @@ let fincas: Finca[] = [];
 window.addEventListener("agrosen:preferences-updated", () => { void cargarMovimientosFinancieros(); });
 
 const moneda = (valor: number) => formatCurrency(valor);
+
+function renderRentabilidad(movimientosActivos: MovimientoFinanciero[], fincas: Finca[]): void {
+  const contenedor = doc.getElementById("finance-profitability");
+  if (!contenedor) return;
+  const fincaPorId = new Map(fincas.map((finca) => [finca.id, finca.nombre]));
+  const porActividad = new Map<string, { ingresos: number; egresos: number; cantidad: number }>();
+  let ingresosTotales = 0;
+  let egresosTotales = 0;
+  movimientosActivos.forEach((movimiento) => {
+    const monto = Number(movimiento.monto) || 0;
+    const ingreso = movimiento.tipo === "Ingreso";
+    const actividad = movimiento.categoria?.trim() || "Sin categoría";
+    const total = porActividad.get(actividad) || { ingresos: 0, egresos: 0, cantidad: 0 };
+    if (ingreso) { total.ingresos += monto; ingresosTotales += monto; }
+    else { total.egresos += monto; egresosTotales += monto; }
+    total.cantidad += 1;
+    porActividad.set(actividad, total);
+  });
+
+  if (!movimientosActivos.length) {
+    contenedor.innerHTML = '<p class="empty">Aún no hay ingresos ni egresos activos para calcular la rentabilidad.</p>';
+    return;
+  }
+
+  const actividades = [...porActividad.entries()].sort((a, b) => (b[1].ingresos - b[1].egresos) - (a[1].ingresos - a[1].egresos));
+  contenedor.innerHTML = `
+    <div class="finance-profit-summary">
+      <div><span>Ingresos totales</span><strong>${escapeHtml(moneda(ingresosTotales))}</strong></div>
+      <div><span>Egresos totales</span><strong>${escapeHtml(moneda(egresosTotales))}</strong></div>
+      <div class="${ingresosTotales - egresosTotales >= 0 ? "is-positive" : "is-negative"}"><span>Rentabilidad neta</span><strong>${escapeHtml(moneda(ingresosTotales - egresosTotales))}</strong></div>
+    </div>
+    <h3 class="finance-breakdown-title">Rentabilidad por actividad</h3>
+    <div class="table-wrap finance-profit-table-wrap"><table class="table finance-profit-table"><thead><tr><th>Actividad / categoría</th><th>Ingresos</th><th>Egresos</th><th>Rentabilidad</th><th>Movimientos</th></tr></thead><tbody>
+      ${actividades.map(([actividad, total]) => {
+        const saldo = total.ingresos - total.egresos;
+        return `<tr><td>${escapeHtml(actividad)}</td><td class="finance-income">${escapeHtml(moneda(total.ingresos))}</td><td class="finance-expense">${escapeHtml(moneda(total.egresos))}</td><td class="${saldo >= 0 ? "finance-income" : "finance-expense"}">${escapeHtml(moneda(saldo))}</td><td>${total.cantidad}</td></tr>`;
+      }).join("")}
+    </tbody></table></div>
+    <h3 class="finance-breakdown-title">Detalle de ingresos y egresos</h3>
+    <div class="table-wrap finance-profit-table-wrap"><table class="table finance-profit-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Actividad / categoría</th><th>Concepto</th><th>Finca</th><th>Valor</th></tr></thead><tbody>
+      ${movimientosActivos.map((movimiento) => `<tr><td>${escapeHtml(formatDate(movimiento.fecha))}</td><td><span class="status ${movimiento.tipo === "Ingreso" ? "ok" : "warn"}">${escapeHtml(movimiento.tipo)}</span></td><td>${escapeHtml(movimiento.categoria || "Sin categoría")}</td><td>${escapeHtml(movimiento.descripcion || "—")}${movimiento.tercero ? `<small class="muted finance-third-party"> · ${escapeHtml(movimiento.tercero)}</small>` : ""}</td><td>${escapeHtml(movimiento.finca_id ? fincaPorId.get(movimiento.finca_id) || "Finca" : "General")}</td><td class="${movimiento.tipo === "Ingreso" ? "finance-income" : "finance-expense"}">${escapeHtml(moneda(Number(movimiento.monto) || 0))}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
 
 export async function cargarFincasFinancieras(): Promise<void> {
   const { data, error } = await supabase.from("fincas").select("id, nombre").order("nombre");
@@ -55,6 +99,8 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   if (error) {
     console.error("No se pudieron cargar los movimientos financieros:", error);
     renderTable("movimientosFinancierosTable", [], () => "");
+    const contenedorRentabilidad = doc.getElementById("finance-profitability");
+    if (contenedorRentabilidad) contenedorRentabilidad.innerHTML = '<p class="empty">No se pudieron cargar los movimientos para calcular la rentabilidad.</p>';
     showToast(error.code === "PGRST205" || error.code === "42P01"
       ? "Falta ejecutar finanzas_supabase.sql en Supabase."
       : "No se pudieron cargar los movimientos. Revisa los permisos de Supabase.");
@@ -64,15 +110,28 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   fincas = fincasData || fincas;
   movimientos = data || [];
 
-  const mesSeleccionado = (doc.getElementById("finance-selected-month") as HTMLInputElement | null)?.value || fechaLocalActual().slice(0, 7);
-  const movimientosMes = movimientos.filter((movimiento) => movimiento.activo && movimiento.fecha?.startsWith(mesSeleccionado));
-  const movimientosVisiblesMes = movimientos.filter((movimiento) => movimiento.fecha?.startsWith(mesSeleccionado));
+  const mesSeleccionado = (doc.getElementById("finance-selected-month") as HTMLInputElement | null)?.value || "";
+  const movimientosMes = movimientos.filter((movimiento) => movimiento.activo && (!mesSeleccionado || movimiento.fecha?.startsWith(mesSeleccionado)));
+  const movimientosVisiblesMes = movimientos.filter((movimiento) => !mesSeleccionado || movimiento.fecha?.startsWith(mesSeleccionado));
   const ingresos = movimientosMes.filter((movimiento) => movimiento.tipo === "Ingreso").reduce((suma, movimiento) => suma + Number(movimiento.monto), 0);
   const egresos = movimientosMes.filter((movimiento) => movimiento.tipo === "Egreso").reduce((suma, movimiento) => suma + Number(movimiento.monto), 0);
   updateKpi("kpi-ingresos", moneda(ingresos));
   updateKpi("kpi-egresos", moneda(egresos));
   updateKpi("kpi-rentabilidad", moneda(ingresos - egresos));
   updateKpi("kpi-cuentas", movimientosMes.length);
+  const textoPeriodo = mesSeleccionado ? `Mes ${mesSeleccionado}` : "Todo el historial activo";
+  ["finance-kpi-period-label", "finance-kpi-period-expenses", "finance-kpi-period-profit"].forEach((id) => {
+    const etiqueta = doc.getElementById(id);
+    if (etiqueta) etiqueta.textContent = textoPeriodo;
+  });
+  const tituloConteo = doc.getElementById("finance-kpi-count-title");
+  if (tituloConteo) tituloConteo.textContent = mesSeleccionado ? "Movimientos del mes" : "Movimientos totales";
+  const etiquetaConteo = doc.getElementById("finance-kpi-period-count");
+  if (etiquetaConteo) etiquetaConteo.textContent = mesSeleccionado ? "Ingresos y egresos activos" : "Todos los movimientos activos";
+  const etiquetaTabla = doc.getElementById("finance-movements-period-label");
+  if (etiquetaTabla) etiquetaTabla.textContent = mesSeleccionado ? `Registros de ${mesSeleccionado}` : "Historial completo, incluidos los movimientos archivados";
+  const botonTodo = doc.getElementById("finance-show-all");
+  botonTodo?.classList.toggle("active", !mesSeleccionado);
 
   let desde = (doc.getElementById("finance-chart-from") as HTMLInputElement | null)?.value || "";
   let hasta = (doc.getElementById("finance-chart-to") as HTMLInputElement | null)?.value || "";
@@ -108,6 +167,7 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
   updateFinanceChart(labels, clavesMeses.map((clave) => totales.get(clave)?.ingresos || 0), clavesMeses.map((clave) => totales.get(clave)?.egresos || 0));
 
   const fincasPorId = new Map(fincas.map((finca) => [finca.id, finca.nombre]));
+  renderRentabilidad(movimientos.filter((movimiento) => movimiento.activo), fincas);
   renderTable("movimientosFinancierosTable", movimientosVisiblesMes, (movimiento) => `
     <tr>
       <td>${escapeHtml(formatDate(movimiento.fecha))}</td>
@@ -122,12 +182,18 @@ export async function cargarMovimientosFinancieros(): Promise<void> {
     </tr>`);
 }
 
+export async function mostrarTodosMovimientosFinancieros(): Promise<void> {
+  const selectorMes = doc.getElementById("finance-selected-month") as HTMLInputElement | null;
+  if (selectorMes) selectorMes.value = "";
+  await cargarMovimientosFinancieros();
+}
+
 export async function guardarMovimientoFinanciero(tipo: "Ingreso" | "Egreso"): Promise<void> {
   const esIngreso = tipo === "Ingreso";
   const prefijo = esIngreso ? "ing" : "gasto";
   const descripcion = (doc.getElementById(`${prefijo}-concepto`) as HTMLInputElement | null)?.value.trim() || "";
   const categoria = (doc.getElementById(esIngreso ? "ing-tipo" : "gasto-categoria") as HTMLSelectElement | null)?.value || "";
-  const monto = Number((doc.getElementById(`${prefijo}-valor`) as HTMLInputElement | null)?.value);
+  const monto = parseLocalizedNumber((doc.getElementById(`${prefijo}-valor`) as HTMLInputElement | null)?.value || "");
   const fecha = (doc.getElementById(`${prefijo}-fecha`) as HTMLInputElement | null)?.value || "";
   const tercero = esIngreso ? (doc.getElementById("ing-cliente") as HTMLInputElement | null)?.value.trim() || null : null;
   const fincaId = (doc.getElementById(esIngreso ? "ing-finca" : "gasto-finca") as HTMLSelectElement | null)?.value || null;
